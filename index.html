@@ -1,0 +1,2637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Solar Savings Calculator — by GridBeater</title>
+<meta name="description" content="See exactly how much solar will cut off your power bill. Australia-only, instant, no signup. A GridBeater tool built for solar agents and homeowners." />
+<meta name="theme-color" content="#E85D3C" />
+
+<!-- Open Graph / WhatsApp / iMessage preview -->
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://whatifsolar.vercel.app/" />
+<meta property="og:title" content="Solar Savings Calculator — by GridBeater" />
+<meta property="og:description" content="See exactly how much solar cuts off your power bill. Australian postcodes, NASA satellite data, instant answer. A GridBeater tool." />
+<meta property="og:site_name" content="GridBeater" />
+
+<!-- Twitter card -->
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:url" content="https://whatifsolar.vercel.app/" />
+<meta name="twitter:title" content="Solar Savings Calculator — by GridBeater" />
+<meta name="twitter:description" content="See exactly how much solar cuts off your power bill. Instant answer for any AU postcode. A GridBeater tool." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/apexcharts@3.45.2/dist/apexcharts.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  :root {
+    --bg: #F5F0E8;
+    --card: #FFFBF4;
+    --text: #1A1A1A;
+    --text-muted: #6B6B6B;
+    --border: #E4DED2;
+    --accent: #E85D3C;
+    --accent-light: #F27A5C;
+    --accent-deep: #C94A2C;
+    --success: #059669;
+    --secondary: #A78BFA;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.06);
+    --shadow-lg: 0 8px 24px rgba(0,0,0,0.08);
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: linear-gradient(135deg, #F5F0E8 0%, #EFE8DC 100%);
+    color: var(--text);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 800px;
+    height: 800px;
+    background: radial-gradient(circle, rgba(232, 93, 60,0.08) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 32px 24px 48px;
+  }
+
+  /* Header */
+  header.site {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 32px;
+  }
+  header.site .icon { color: var(--accent); display: inline-flex; }
+  header.site h1 {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+  header.site .attribution {
+    margin-left: auto;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .gb-link {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 600;
+    border-bottom: 1px dotted var(--accent);
+    transition: color 0.15s ease, border-color 0.15s ease;
+  }
+  .gb-link:hover { color: var(--accent-deep); border-color: var(--accent-deep); }
+
+  /* Inputs */
+  .input-section {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 24px;
+    border: 1px solid var(--border);
+  }
+  .input-row {
+    display: grid;
+    grid-template-columns: 1fr 1.6fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  @media (max-width: 600px) {
+    .input-row { grid-template-columns: 1fr; }
+  }
+  .field-customer { margin-bottom: 16px; }
+  .field .optional {
+    font-weight: 400;
+    color: var(--text-muted);
+    font-size: 11px;
+    text-transform: none;
+    letter-spacing: 0;
+    margin-left: 4px;
+  }
+
+  /* Recents panel */
+  .recents-panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .recents-panel summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 12px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .recents-panel summary::-webkit-details-marker { display: none; }
+  .recents-panel summary::before {
+    content: '▸';
+    margin-right: 8px;
+    font-size: 10px;
+    transition: transform 0.2s ease;
+    display: inline-block;
+  }
+  .recents-panel[open] summary::before { transform: rotate(90deg); }
+  .recents-summary-text { flex: 1; text-align: left; }
+  .recents-clear {
+    font-size: 11px;
+    background: none;
+    border: none;
+    color: var(--accent);
+    cursor: pointer;
+    padding: 0 4px;
+    text-decoration: underline;
+  }
+  .recents-list {
+    list-style: none;
+    margin: 0;
+    padding: 0 0 8px 0;
+    max-height: 320px;
+    overflow-y: auto;
+  }
+  .recents-empty {
+    padding: 8px 16px 12px;
+    font-size: 12px;
+    color: var(--text-muted);
+    font-style: italic;
+  }
+  .recent-item {
+    padding: 10px 16px;
+    cursor: pointer;
+    border-top: 1px solid var(--border);
+    transition: background 0.15s ease;
+  }
+  .recent-item:hover { background: var(--bg); }
+  .recent-line1 { font-size: 13px; color: var(--text); margin-bottom: 2px; }
+  .recent-line1 strong { color: var(--accent); }
+  .recent-line2 { font-size: 11px; color: var(--text-muted); }
+
+  /* Customer name banner shown on screenshot */
+  .name-banner {
+    display: none;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent);
+    padding: 8px 12px;
+    background: rgba(232, 93, 60,0.08);
+    border-radius: 8px;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+  .field label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+  .field input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: #fff;
+    font-family: inherit;
+    font-size: 15px;
+    color: var(--text);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .field input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(232, 93, 60,0.15);
+  }
+  .field input.shimmer {
+    background: linear-gradient(90deg, #fff 0%, #fef3e7 50%, #fff 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.2s linear infinite;
+  }
+  @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+  .advanced-toggle {
+    margin: 8px 0 16px;
+    font-size: 13px;
+    color: var(--text-muted);
+    cursor: pointer;
+    user-select: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .advanced-toggle:hover { color: var(--text); }
+  .advanced-panel {
+    display: none;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+    padding: 16px;
+    background: rgba(255,255,255,0.5);
+    border: 1px dashed var(--border);
+    border-radius: var(--radius-sm);
+  }
+  .advanced-panel.open { display: grid; }
+  @media (max-width: 600px) {
+    .advanced-panel { grid-template-columns: 1fr; }
+  }
+  .advanced-panel .helper { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+  .button-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+  .btn {
+    padding: 12px 20px;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+  }
+  .btn-primary:hover {
+    background: var(--accent-deep);
+    box-shadow: 0 4px 12px rgba(232, 93, 60, 0.3);
+  }
+  .btn-primary.ready { animation: pulse-glow 0.8s ease-in-out 1; }
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(232, 93, 60,0); }
+    50% { box-shadow: 0 0 0 8px rgba(232, 93, 60,0.25); }
+  }
+  .btn-secondary {
+    background: #fff;
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { background: var(--card); }
+  .btn-share {
+    background: #fff;
+    color: var(--success);
+    border: 1px solid var(--success);
+  }
+  .btn-share:hover { background: rgba(5,150,105,0.06); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* Confirm location card */
+  .confirm-card {
+    display: none;
+    background: #fff;
+    border: 1px solid var(--accent-light);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow-sm);
+  }
+  .confirm-card.show { display: block; }
+  .confirm-card .label { font-size: 12px; color: var(--text-muted); margin-bottom: 6px; font-weight: 500; }
+  .confirm-card .matched { font-size: 16px; font-weight: 600; margin-bottom: 12px; }
+  .confirm-card .actions { display: flex; gap: 8px; }
+  .confirm-card .btn-mini {
+    padding: 8px 14px;
+    font-size: 13px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: #fff;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .confirm-card .btn-mini.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  /* Error state */
+  .error-banner {
+    display: none;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #991b1b;
+    padding: 12px 16px;
+    border-radius: var(--radius-sm);
+    margin-bottom: 16px;
+    font-size: 14px;
+  }
+  .error-banner.show { display: block; }
+
+  /* Results sections */
+  .results { display: none; }
+  .results.show { display: block; }
+
+  .section-card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
+  }
+  .section-card:hover { box-shadow: var(--shadow-md); }
+
+  .meta-strip {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    font-size: 12px;
+    color: var(--text-muted);
+    padding-bottom: 16px;
+    margin-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .meta-strip span strong { color: var(--text); font-weight: 600; }
+
+  /* Hero — sunny gradient card */
+  .hero {
+    text-align: center;
+    padding: 40px 32px 36px;
+    margin: 12px -16px 28px;
+    position: relative;
+    background: linear-gradient(135deg, #FFE4B5 0%, #FDB572 35%, #F59E0B 75%, #D97706 100%);
+    border-radius: 16px;
+    color: #fff;
+    overflow: hidden;
+    box-shadow: 0 16px 36px -10px rgba(217, 119, 6, 0.5),
+                0 6px 14px -3px rgba(217, 119, 6, 0.3);
+  }
+  /* Sun glow accent — top right */
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -60px;
+    right: -60px;
+    width: 220px;
+    height: 220px;
+    background: radial-gradient(circle, rgba(255, 248, 220, 0.55) 0%, rgba(255, 248, 220, 0) 65%);
+    pointer-events: none;
+  }
+  /* Soft horizon glow — bottom */
+  .hero::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 60px;
+    background: linear-gradient(to top, rgba(255, 255, 255, 0.18), transparent);
+    pointer-events: none;
+  }
+  .hero > * { position: relative; z-index: 1; }
+
+  .hero .hero-greeting {
+    font-size: 16px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.95);
+    margin-bottom: 18px;
+    letter-spacing: -0.01em;
+    text-shadow: 0 1px 2px rgba(146, 64, 14, 0.25);
+  }
+  .hero .hero-greeting:empty { display: none; }
+
+  .hero .hero-prefix {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: rgba(255, 255, 255, 0.85);
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  .hero .hero-amount {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 4px;
+    line-height: 1;
+  }
+  .hero .hero-currency {
+    font-size: clamp(28px, 4vw, 36px);
+    font-weight: 600;
+    color: #fff;
+    align-self: flex-start;
+    margin-top: 12px;
+    text-shadow: 0 2px 4px rgba(146, 64, 14, 0.3);
+  }
+  .hero .number {
+    font-size: clamp(56px, 11vw, 84px);
+    font-weight: 800;
+    letter-spacing: -0.035em;
+    line-height: 1;
+    color: #fff;
+    margin: 0;
+    display: inline-block;
+    text-shadow: 0 2px 8px rgba(146, 64, 14, 0.35);
+  }
+  .hero .unit {
+    font-size: 18px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.9);
+    margin-left: 4px;
+  }
+  .hero .horizon {
+    height: 1px;
+    width: 64px;
+    margin: 18px auto 16px;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 1px;
+  }
+  .hero .subtitle {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.92);
+    margin: 0;
+    line-height: 1.7;
+    font-weight: 500;
+  }
+  .hero .subtitle strong {
+    color: #fff;
+    font-weight: 700;
+  }
+  .hero .hero-sep {
+    color: rgba(255, 255, 255, 0.55);
+    margin: 0 8px;
+  }
+
+  .sun-arc {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 56px;
+    height: 56px;
+    z-index: 1;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 0.85;
+  }
+  @media (max-width: 600px) {
+    .sun-arc { width: 44px; height: 44px; top: 12px; right: 12px; }
+    .hero { padding: 28px 20px 24px; }
+  }
+
+  /* Season context strip */
+  .season-context {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-muted);
+    padding: 10px 14px;
+    background: var(--card);
+    border-radius: 999px;
+    width: fit-content;
+    margin: 4px auto 8px;
+    transition: background 0.3s ease;
+  }
+  .season-context strong { color: var(--text); font-weight: 600; }
+  .season-context-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 600;
+    color: var(--accent);
+  }
+  .season-context-sep { color: var(--border); }
+  .season-context-unit { color: var(--text-muted); font-size: 12px; }
+
+  /* Seasonal cards */
+  .seasonal {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-top: 24px;
+  }
+  @media (max-width: 700px) {
+    .seasonal { grid-template-columns: repeat(2, 1fr); }
+  }
+  .season-card {
+    background: var(--card);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    text-align: center;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  }
+  .season-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--accent-light);
+  }
+  .season-card.active {
+    border-color: var(--accent);
+    background: #fff;
+  }
+  .season-card .name { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+  .season-card .months { font-size: 11px; color: var(--text-muted); margin-bottom: 8px; }
+  .season-card .value { font-size: 22px; font-weight: 700; color: var(--text); letter-spacing: -0.01em; }
+  .season-card .value-unit { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+  /* Stat strip below hero */
+  .stat-strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+  }
+  @media (max-width: 600px) {
+    .stat-strip { grid-template-columns: repeat(2, 1fr); }
+  }
+  .stat-strip .stat { text-align: center; }
+  .stat-strip .stat .label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .stat-strip .stat .val { font-size: 18px; font-weight: 600; color: var(--text); }
+
+  /* Pricing assumptions panel */
+  .pricing-panel {
+    margin-top: 20px;
+    padding: 14px 16px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+  }
+  .pricing-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .pricing-panel-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+  .pricing-panel-reset {
+    font-size: 11px;
+    color: var(--accent);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    text-decoration: underline;
+  }
+  .pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+  @media (max-width: 700px) {
+    .pricing-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  .pricing-cell { display: flex; flex-direction: column; gap: 4px; }
+  .pricing-cell .label {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+  .pricing-cell .editable {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    border: 1px solid transparent;
+    border-radius: 6px;
+    padding: 4px 6px;
+    margin-left: -6px;
+    background: transparent;
+    cursor: text;
+    width: fit-content;
+    min-width: 60px;
+  }
+  .pricing-cell .editable:hover { background: var(--bg); border-color: var(--border); }
+  .pricing-cell .editable:focus { background: var(--bg); border-color: var(--accent); outline: none; }
+  .pricing-cell .editable.changed { color: var(--accent); }
+  .pricing-cell .pencil {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-left: 4px;
+  }
+
+  /* Compare panel */
+  .compare-panel { margin-top: 8px; margin-bottom: 24px; }
+  .compare-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .compare-header h3 {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+    color: var(--text);
+  }
+  .compare-header .compare-sub {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .compare-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  @media (max-width: 700px) {
+    .compare-grid { grid-template-columns: 1fr; }
+  }
+  .compare-card {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    background: var(--bg);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  .compare-card.is-current {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent);
+  }
+  .compare-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .compare-size {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+    border: 1px solid transparent;
+    border-radius: 6px;
+    padding: 2px 6px;
+    margin-left: -6px;
+    cursor: text;
+    background: transparent;
+    width: fit-content;
+    min-width: 60px;
+  }
+  .compare-size:hover { background: var(--card); border-color: var(--border); }
+  .compare-size:focus { background: var(--card); border-color: var(--accent); outline: none; }
+  .compare-size-unit { font-size: 13px; color: var(--text-muted); margin-left: 2px; }
+  .compare-current-tag {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--accent);
+    font-weight: 700;
+  }
+  .compare-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding: 6px 0;
+    font-size: 13px;
+  }
+  .compare-row .k { color: var(--text-muted); }
+  .compare-row .v { font-weight: 600; color: var(--text); }
+  .compare-row.hero-row { padding-top: 8px; }
+  .compare-row.hero-row .v { color: var(--accent); font-size: 17px; }
+  .compare-install {
+    font-weight: 600;
+    color: var(--text);
+    border: 1px solid transparent;
+    border-radius: 4px;
+    padding: 1px 4px;
+    margin-left: -4px;
+    cursor: text;
+    background: transparent;
+    display: inline-block;
+    min-width: 50px;
+    text-align: right;
+  }
+  .compare-install:hover { background: var(--card); border-color: var(--border); }
+  .compare-install:focus { background: #fff; border-color: var(--accent); outline: none; }
+  .compare-row .custom-tag {
+    color: var(--accent);
+    font-weight: 700;
+    margin-left: 2px;
+  }
+
+  /* Disclaimer */
+  .disclaimer {
+    font-size: 11px;
+    color: var(--text-muted);
+    line-height: 1.5;
+    padding: 12px 16px;
+    background: var(--card);
+    border-radius: var(--radius-sm);
+    margin-top: 20px;
+    border: 1px solid var(--border);
+  }
+
+  /* Bottom section */
+  .bottom-section .chart-area {
+    background: #fff;
+    border-radius: var(--radius-sm);
+    padding: 16px 8px 8px;
+    margin-bottom: 20px;
+    border: 1px solid var(--border);
+  }
+  .bottom-section h2 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin: 0 0 4px;
+  }
+  .bottom-section .section-sub {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin: 0 0 24px;
+  }
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  @media (max-width: 600px) {
+    .stats-grid { grid-template-columns: 1fr; }
+  }
+  .stat-card {
+    background: var(--card);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    border: 1px solid var(--border);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  .stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+  .stat-card .label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .stat-card .val { font-size: 22px; font-weight: 700; color: var(--text); letter-spacing: -0.01em; }
+  .stat-card .val-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .stat-card.success .val { color: var(--success); }
+
+  /* How we calculate */
+  details.how {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 16px 20px;
+    margin-bottom: 20px;
+  }
+  details.how summary {
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text);
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  details.how summary::-webkit-details-marker { display: none; }
+  details.how summary::after {
+    content: '+';
+    margin-left: auto;
+    font-size: 18px;
+    color: var(--text-muted);
+    transition: transform 0.2s ease;
+  }
+  details.how[open] summary::after { content: '−'; }
+  details.how .body {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.6;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+  details.how .body p { margin: 0 0 8px; }
+  details.how .body strong { color: var(--text); font-weight: 600; }
+
+  /* Screenshot mode */
+  body.screenshot-top .input-section,
+  body.screenshot-top .bottom-section,
+  body.screenshot-top footer.site,
+  body.screenshot-top .screenshot-actions,
+  body.screenshot-top .recents-panel,
+  body.screenshot-top .pricing-panel,
+  body.screenshot-bottom .input-section,
+  body.screenshot-bottom .top-section,
+  body.screenshot-bottom footer.site,
+  body.screenshot-bottom .screenshot-actions,
+  body.screenshot-bottom .recents-panel {
+    display: none !important;
+  }
+  body.screenshot-top .container,
+  body.screenshot-bottom .container {
+    padding-top: 16px;
+  }
+  body.screenshot-top header.site,
+  body.screenshot-bottom header.site {
+    margin-bottom: 16px;
+  }
+  .exit-screenshot {
+    display: none;
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 100;
+    background: var(--text);
+    color: #fff;
+    padding: 10px 16px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    box-shadow: var(--shadow-lg);
+    font-family: inherit;
+  }
+  body.screenshot-top .exit-screenshot,
+  body.screenshot-bottom .exit-screenshot {
+    display: block;
+  }
+
+  /* Toast for screenshot copy feedback */
+  .toast {
+    position: fixed;
+    top: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-12px);
+    background: var(--text);
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: var(--shadow-lg);
+    z-index: 200;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 180ms ease, transform 180ms ease;
+    font-family: inherit;
+    max-width: 90vw;
+    text-align: center;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  .toast.error { background: #B91C1C; }
+  .toast.success { background: #14532D; }
+
+  /* Capturing flag — suppresses hover/transition glitches inside the capture target during html2canvas render */
+  body.capturing .container * {
+    transition: none !important;
+    animation: none !important;
+  }
+  body.capturing { scroll-behavior: auto !important; }
+  html.capturing { scroll-behavior: auto !important; }
+  /* Hide toast inside the capture frame so it doesn't appear in the screenshot */
+  body.capturing .toast { display: none !important; }
+
+  .screenshot-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px dashed var(--border);
+  }
+
+  /* Footer */
+  footer.site {
+    text-align: center;
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 48px;
+    padding-top: 28px;
+    padding-bottom: 12px;
+    border-top: 1px solid var(--border);
+    line-height: 1.7;
+  }
+  footer.site .gb-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    background: var(--text);
+    color: #fff;
+    border-radius: 999px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.01em;
+    transition: transform 0.15s ease, background 0.15s ease;
+    margin-bottom: 14px;
+  }
+  footer.site .gb-cta:hover { background: var(--accent); transform: translateY(-1px); }
+  footer.site .gb-cta .arrow { font-size: 15px; line-height: 1; }
+  footer.site .fine { font-size: 11px; color: var(--text-muted); opacity: 0.8; }
+
+  /* Loading */
+  .loading {
+    display: none;
+    text-align: center;
+    padding: 40px;
+    color: var(--text-muted);
+    font-size: 14px;
+  }
+  .loading.show { display: block; }
+  .loading::before {
+    content: '';
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    vertical-align: middle;
+    margin-right: 10px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <header class="site">
+    <span class="icon" aria-hidden="true">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="4"></circle>
+        <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path>
+      </svg>
+    </span>
+    <h1>Solar Savings Calculator</h1>
+    <span class="attribution">A <a href="https://gridbeater.com.au/" target="_blank" rel="noopener" class="gb-link">GridBeater</a> tool</span>
+  </header>
+
+  <!-- Recents panel -->
+  <details class="recents-panel" id="recentsPanel">
+    <summary>
+      <span class="recents-summary-text">Recent calculations</span>
+      <button type="button" class="recents-clear" id="recentsClear" title="Clear all recent calculations">Clear</button>
+    </summary>
+    <ul class="recents-list" id="recentsList"></ul>
+  </details>
+
+  <!-- Input section -->
+  <section class="input-section">
+    <div class="field field-customer">
+      <label for="customerName">Customer name <span class="optional">(optional — appears on screenshot)</span></label>
+      <input type="text" id="customerName" placeholder="e.g. Sarah Wilson" autocomplete="off" />
+    </div>
+    <div class="input-row">
+      <div class="field">
+        <label for="size">System Size (kW)</label>
+        <input type="number" id="size" placeholder="e.g. 6.6" step="0.1" min="0.5" max="100" />
+      </div>
+      <div class="field">
+        <label for="location">Location (postcode, suburb, or address)</label>
+        <input type="text" id="location" placeholder="e.g. 3029 or Hoppers Crossing" autocomplete="off" />
+      </div>
+    </div>
+    <span class="advanced-toggle" id="advancedToggle" role="button" tabindex="0" aria-expanded="false" aria-controls="advancedPanel">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+      Advanced
+    </span>
+    <div class="advanced-panel" id="advancedPanel">
+      <div class="field">
+        <label for="tilt">Panel Tilt (degrees)</label>
+        <input type="number" id="tilt" placeholder="auto" step="1" min="0" max="90" />
+        <div class="helper">Leave blank for optimal tilt at this latitude.</div>
+      </div>
+    </div>
+
+    <div class="error-banner" id="errorBanner" role="alert" aria-live="assertive"></div>
+
+    <div class="confirm-card" id="confirmCard">
+      <div class="label">CONFIRM LOCATION</div>
+      <div class="matched" id="confirmMatched"></div>
+      <div class="actions">
+        <button class="btn-mini primary" id="confirmYes">Yes, calculate</button>
+        <button class="btn-mini" id="confirmNo">No, search again</button>
+      </div>
+    </div>
+
+    <div class="button-row">
+      <button class="btn btn-primary" id="calculateBtn">Calculate</button>
+    </div>
+  </section>
+
+  <div class="loading" id="loading">Calculating…</div>
+
+  <!-- Results -->
+  <div class="results" id="results">
+
+    <!-- TOP SECTION -->
+    <section class="top-section section-card">
+      <div class="name-banner" id="nameBannerTop"></div>
+      <div class="meta-strip">
+        <span><strong id="metaSize">—</strong> system</span>
+        <span><strong id="metaLocation">—</strong></span>
+        <span>Calculated <strong id="metaDate">—</strong></span>
+      </div>
+
+      <div class="hero">
+        <svg class="sun-arc" id="sunArc" viewBox="0 0 64 64" aria-hidden="true">
+          <path id="sunPath" d="M 8 48 A 24 24 0 0 1 56 48" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+          <circle id="sunDot" cx="32" cy="24" r="5.5" fill="#fff"/>
+          <line x1="8" y1="48" x2="56" y2="48" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
+        </svg>
+        <div class="hero-greeting" id="heroGreeting"></div>
+        <div class="hero-prefix">Reduce your bill by</div>
+        <div class="hero-amount">
+          <span class="hero-currency">$</span><span class="number" id="heroSavings">0</span><span class="unit">/ year</span>
+        </div>
+        <div class="horizon"></div>
+        <p class="subtitle">
+          <strong id="heroGenKwh">—</strong> kWh production
+          <span class="hero-sep">·</span>
+          <strong id="heroPayback">—</strong> payback
+          <span class="hero-sep coverage-sep" id="coverageSep">·</span>
+          <span id="coveragePhrase">covers <strong id="coveragePct">—</strong> of an avg <span id="stateName">—</span> home</span>
+        </p>
+      </div>
+
+      <div class="season-context" id="seasonContext">
+        <span class="season-context-label">Viewing</span>
+        <strong id="seasonContextName">Summer</strong>
+        <span class="season-context-sep">·</span>
+        <strong id="seasonContextValue">— kWh</strong>
+        <span class="season-context-unit">avg / day</span>
+      </div>
+
+      <div class="seasonal" id="seasonal">
+        <div class="season-card" data-season="summer">
+          <div class="name">Summer</div>
+          <div class="months">Dec – Feb</div>
+          <div class="value" data-val>0</div>
+          <div class="value-unit">kWh / day</div>
+        </div>
+        <div class="season-card" data-season="autumn">
+          <div class="name">Autumn</div>
+          <div class="months">Mar – May</div>
+          <div class="value" data-val>0</div>
+          <div class="value-unit">kWh / day</div>
+        </div>
+        <div class="season-card" data-season="winter">
+          <div class="name">Winter</div>
+          <div class="months">Jun – Aug</div>
+          <div class="value" data-val>0</div>
+          <div class="value-unit">kWh / day</div>
+        </div>
+        <div class="season-card" data-season="spring">
+          <div class="name">Spring</div>
+          <div class="months">Sep – Nov</div>
+          <div class="value" data-val>0</div>
+          <div class="value-unit">kWh / day</div>
+        </div>
+      </div>
+
+      <div class="stat-strip">
+        <div class="stat">
+          <div class="label">Daily Average</div>
+          <div class="val" id="dailyAvgTop">— kWh</div>
+        </div>
+        <div class="stat">
+          <div class="label">Peak Day Estimate</div>
+          <div class="val" id="peakDay">— kWh</div>
+        </div>
+        <div class="stat">
+          <div class="label">CER Solar Zone</div>
+          <div class="val" id="cerZone">—</div>
+        </div>
+        <div class="stat">
+          <div class="label">Peak Sun Hours</div>
+          <div class="val" id="peakSun">— /day</div>
+        </div>
+      </div>
+
+      <div class="pricing-panel" id="pricingPanel">
+        <div class="pricing-panel-header">
+          <div class="pricing-panel-title">Pricing assumptions <span style="text-transform:none; letter-spacing:0; color:var(--text-muted); font-weight:400;">(tap any number to edit)</span></div>
+          <button type="button" class="pricing-panel-reset" id="resetPricing">Reset to state defaults</button>
+        </div>
+        <div class="pricing-grid">
+          <div class="pricing-cell">
+            <span class="label">Retail rate</span>
+            <span class="editable" id="editRetail" contenteditable="true" inputmode="decimal" data-field="retailRate">—</span>
+          </div>
+          <div class="pricing-cell">
+            <span class="label">Feed-in tariff</span>
+            <span class="editable" id="editFit" contenteditable="true" inputmode="decimal" data-field="fitRate">—</span>
+          </div>
+          <div class="pricing-cell">
+            <span class="label">Self-consumption</span>
+            <span class="editable" id="editSelf" contenteditable="true" inputmode="decimal" data-field="selfConsumption">—</span>
+          </div>
+          <div class="pricing-cell">
+            <span class="label">Install cost (after STC)</span>
+            <span class="editable" id="editInstall" contenteditable="true" inputmode="decimal" data-field="installCost">—</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="disclaimer">
+        <strong>Estimate only.</strong> Based on NASA POWER satellite data and CER solar zone classification for Australian postcodes. Assumes 14% standard system losses and optimal panel orientation for your latitude. Actual generation varies <strong>±10–15%</strong> depending on weather, panel quality, shading, and installation specifics.
+      </div>
+
+      <div class="screenshot-actions">
+        <button class="btn btn-secondary" data-screenshot="top">📸 Copy top as image</button>
+        <button class="btn btn-secondary" data-screenshot="bottom">📸 Copy bottom as image</button>
+        <button class="btn btn-share" id="shareWhatsapp" type="button">📱 WhatsApp</button>
+        <button class="btn btn-share" id="shareCopy" type="button">📋 Copy message</button>
+      </div>
+    </section>
+
+    <!-- BOTTOM SECTION -->
+    <section class="bottom-section section-card">
+      <div class="name-banner" id="nameBannerBottom"></div>
+      <div class="meta-strip">
+        <span><strong id="metaSize2">—</strong> system</span>
+        <span><strong id="metaLocation2">—</strong></span>
+        <span>Calculated <strong id="metaDate2">—</strong></span>
+      </div>
+
+      <h2>Detailed Breakdown</h2>
+      <p class="section-sub">Monthly generation, key stats, and Australian context.</p>
+
+      <div class="compare-panel" id="comparePanel">
+        <div class="compare-header">
+          <h3>Side-by-side comparison</h3>
+          <span class="compare-sub">Tap any kW or install cost to change it</span>
+        </div>
+        <div class="compare-grid" id="compareGrid"></div>
+      </div>
+
+      <div class="chart-area">
+        <div id="monthlyChart"></div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="label">Annual Total</div>
+          <div class="val" id="annualTotal">—</div>
+          <div class="val-sub">kWh / year</div>
+        </div>
+        <div class="stat-card success">
+          <div class="label">CO₂ Offset</div>
+          <div class="val" id="co2Offset">—</div>
+          <div class="val-sub">kg / year avoided</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Best Month</div>
+          <div class="val" id="bestMonth">—</div>
+          <div class="val-sub" id="bestMonthVal">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Lowest Month</div>
+          <div class="val" id="worstMonth">—</div>
+          <div class="val-sub" id="worstMonthVal">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">State Feed-in Tariff</div>
+          <div class="val" id="fitRange">—</div>
+          <div class="val-sub" id="fitNote">indicative range</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">STC Zone</div>
+          <div class="val" id="stcZone">—</div>
+          <div class="val-sub">small-scale tech certificates</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">vs AU Average System</div>
+          <div class="val" id="vsAvg">—</div>
+          <div class="val-sub">Australian average ≈ 7 kW</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Daily Average</div>
+          <div class="val" id="dailyAvg">—</div>
+          <div class="val-sub">kWh / day across the year</div>
+        </div>
+      </div>
+
+      <details class="how">
+        <summary>How we calculate this</summary>
+        <div class="body">
+          <p><strong>Solar irradiance:</strong> we use NASA POWER satellite data (SSE-derived monthly irradiance averages) for your exact latitude and longitude — the same data backbone many commercial solar tools rely on.</p>
+          <p><strong>Australian adjustment:</strong> we apply a CER (Clean Energy Regulator) solar-zone factor based on your postcode. Australia is divided into 4 zones; lower zone numbers = stronger sun. This bakes in regional accuracy on top of the satellite data.</p>
+          <p><strong>System losses:</strong> 14% — the standard industry assumption covering inverter inefficiency, DC/AC conversion, cabling, dust, and minor shading.</p>
+          <p><strong>Panel orientation:</strong> we assume optimal tilt for your latitude with North-facing panels. Real installations are often constrained by roof angle and direction, so actual output may be a few percent below this estimate.</p>
+          <p><strong>Comparison data:</strong> typical home consumption averages from AEMC household energy reports, broken down by state.</p>
+          <p><strong>Fallback:</strong> if NASA POWER is unavailable, we use a peak-sun-hours formula by latitude, also adjusted by CER zone — slightly less precise but sensible.</p>
+        </div>
+      </details>
+
+      <div class="disclaimer">
+        <strong>Estimate only.</strong> Australian context (CER zones, STC zones, state feed-in tariff ranges, consumption averages) is current as of 2026 and may change. Feed-in tariff ranges are indicative — actual rates vary by retailer and plan. For binding quotes, consult a licensed installer.
+      </div>
+
+      <div class="screenshot-actions">
+        <button class="btn btn-secondary" data-screenshot="top">📸 Copy top as image</button>
+        <button class="btn btn-secondary" data-screenshot="bottom">📸 Copy bottom as image</button>
+        <button class="btn btn-share" id="shareWhatsapp2" type="button">📱 WhatsApp</button>
+        <button class="btn btn-share" id="shareCopy2" type="button">📋 Copy message</button>
+      </div>
+    </section>
+
+  </div>
+
+  <footer class="site">
+    <div>
+      <a class="gb-cta" href="https://gridbeater.com.au/" target="_blank" rel="noopener">
+        Powered by GridBeater <span class="arrow" aria-hidden="true">→</span>
+      </a>
+    </div>
+    <div>Want to see your full savings picture — solar, battery, EV? <a href="https://gridbeater.com.au/" target="_blank" rel="noopener" class="gb-link">See my savings at GridBeater</a></div>
+    <div class="fine">Data: NASA POWER satellite irradiance · CER solar zone · state retail rates. Estimates only, not a quote.</div>
+  </footer>
+
+</div>
+
+<button class="exit-screenshot" id="exitScreenshot">Exit screenshot view</button>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* ============================================================
+   SOLAR PRODUCTION — APPLICATION SCRIPT
+   Architecture per Constitution v1.1
+   ============================================================ */
+
+/* ---------- 1. Embedded Australian data ---------- */
+
+// State inference from postcode. Accepts a 4-character postcode string (with leading zeros for ACT/NT).
+// Source: Australia Post postcode allocations
+function postcodeToState(pc) {
+  if (pc == null) return null;
+  const s = String(pc).padStart(4, '0');
+  const n = parseInt(s, 10);
+  if (isNaN(n)) return null;
+  // NT: 0800-0999 (4-digit form)
+  if (n >= 800 && n <= 999) return 'NT';
+  // ACT: 0200-0299 (4-digit form), plus 2600-2618, 2900-2920
+  if ((n >= 200 && n <= 299) || (n >= 2600 && n <= 2618) || (n >= 2900 && n <= 2920)) return 'ACT';
+  // NSW: 1000-2599, 2619-2899, 2921-2999
+  if ((n >= 1000 && n <= 2599) || (n >= 2619 && n <= 2899) || (n >= 2921 && n <= 2999)) return 'NSW';
+  // VIC: 3000-3999, 8000-8999
+  if ((n >= 3000 && n <= 3999) || (n >= 8000 && n <= 8999)) return 'VIC';
+  // QLD: 4000-4999, 9000-9999
+  if ((n >= 4000 && n <= 4999) || (n >= 9000 && n <= 9999)) return 'QLD';
+  // SA: 5000-5999
+  if (n >= 5000 && n <= 5999) return 'SA';
+  // WA: 6000-6999
+  if (n >= 6000 && n <= 6999) return 'WA';
+  // TAS: 7000-7999
+  if (n >= 7000 && n <= 7999) return 'TAS';
+  return null;
+}
+
+// CER solar zone by postcode range. Australia has 4 zones:
+// Zone 1 = highest irradiance (NT, far north WA/QLD)
+// Zone 4 = lowest irradiance (TAS, southern coastal)
+// This is a simplified approximation of the official CER zone map.
+function postcodeToCerZone(pc) {
+  if (pc == null) return 3;
+  const s = String(pc).padStart(4, '0');
+  const n = parseInt(s, 10);
+  if (isNaN(n)) return 3; // safe default
+  const state = postcodeToState(s);
+
+  // NT — almost all Zone 1
+  if (state === 'NT') return 1;
+  // QLD — north Zone 1, south Zone 2-3
+  if (state === 'QLD') {
+    if (n >= 4800) return 1;       // far north QLD
+    if (n >= 4400) return 2;       // central QLD
+    return 3;                      // SE QLD
+  }
+  // WA — north Zone 1-2, south Zone 3
+  if (state === 'WA') {
+    if (n >= 6700) return 1;       // Pilbara, Kimberley
+    if (n >= 6500) return 2;       // mid-WA
+    return 3;                      // Perth and southwest
+  }
+  // SA — Zone 3 mostly, north Zone 2
+  if (state === 'SA') {
+    if (n >= 5700) return 2;       // outback SA
+    return 3;
+  }
+  // NSW — Zone 3 mostly, far west Zone 2
+  if (state === 'NSW') {
+    if (n >= 2820 && n <= 2899) return 2;
+    return 3;
+  }
+  // VIC — Zone 4
+  if (state === 'VIC') return 4;
+  // TAS — Zone 4
+  if (state === 'TAS') return 4;
+  // ACT — Zone 3
+  if (state === 'ACT') return 3;
+
+  return 3;
+}
+
+// CER zone production multiplier (kWh per kW installed per year, baseline)
+// Approximate, used for offline fallback formula AND as an adjustment on top of NASA POWER
+const CER_ZONE_BASELINE_KWH_PER_KW_YEAR = {
+  1: 1622,  // ~4.4 kWh/kW/day × 365
+  2: 1536,  // ~4.2
+  3: 1382,  // ~3.8
+  4: 1278   // ~3.5
+};
+
+// CER zone peak sun hours/day (annual average)
+const CER_ZONE_PEAK_SUN = { 1: 5.75, 2: 5.45, 3: 4.90, 4: 4.50 };
+
+// STC zone (separate from CER solar zone — STC is for rebate calculation, ranges 1–4 also)
+// Approximation: STC zones loosely align with CER zones in geography
+function postcodeToStcZone(pc) {
+  // STC zones use the same broad geographic split as CER zones in practice
+  return postcodeToCerZone(pc);
+}
+
+// State-specific average household consumption (kWh/year)
+// Source: AEMC residential energy price trends report (approximate 2025 figures)
+const STATE_CONSUMPTION = {
+  NSW: 5800,
+  VIC: 5200,
+  QLD: 6500,
+  SA: 5400,
+  WA: 5900,
+  TAS: 8400,  // higher due to electric heating
+  NT: 8800,   // higher due to AC
+  ACT: 7200
+};
+
+// State-specific feed-in tariff indicative ranges (cents per kWh)
+const STATE_FIT_RANGES = {
+  NSW: '5–12¢',
+  VIC: '4–10¢',
+  QLD: '4–12¢',
+  SA: '5–10¢',
+  WA: '2.5–10¢',
+  TAS: '8–10¢',
+  NT: '8–10¢',
+  ACT: '6–12¢'
+};
+
+const STATE_NAMES = {
+  NSW: 'NSW',
+  VIC: 'Victorian',
+  QLD: 'Queensland',
+  SA: 'South Australian',
+  WA: 'Western Australian',
+  TAS: 'Tasmanian',
+  NT: 'Northern Territory',
+  ACT: 'ACT'
+};
+
+// CO2 emissions intensity of grid electricity by state (kg CO2 / kWh)
+// Source: Climate Active / DCCEEW National Greenhouse Accounts (approximate)
+const STATE_GRID_CO2 = {
+  NSW: 0.73,
+  VIC: 0.85,
+  QLD: 0.71,
+  SA: 0.25,
+  WA: 0.51,
+  TAS: 0.17,
+  NT: 0.54,
+  ACT: 0.73
+};
+
+// State-specific residential electricity retail rate (cents/kWh) — 2025-26 mid-points
+// Sources: AER DMO 7 (NSW/SE QLD/SA), Victorian Default Offer, Canstar Blue, Global Petrol Prices
+const STATE_RETAIL_RATE = {
+  NSW: 28,
+  VIC: 25,
+  QLD: 20,
+  SA: 34,
+  WA: 33,
+  TAS: 24,
+  NT: 29,
+  ACT: 27
+};
+
+// State-specific feed-in tariff mid-point (cents/kWh) — 2025-26 typical retailer-paid
+// Sources: Solar Choice FIT comparison (state-by-state), retailer surveys
+const STATE_FIT_MID = {
+  NSW: 6.5,
+  VIC: 5,
+  QLD: 6.5,
+  SA: 8,
+  WA: 7,
+  TAS: 7.5,
+  NT: 6.5,
+  ACT: 5.5
+};
+
+// Default install costs after STC rebate — 2026 AU national typical
+// Source: Solar Choice Price Index, SolarQuotes, Why Solar (Q1-Q2 2026)
+// Used as defaults; user-editable per quote.
+const INSTALL_COST_PRESETS = {
+  6.6: 6000,
+  10: 8800,
+  13.2: 11200
+};
+function defaultInstallCost(systemKw) {
+  // Linear interpolation between presets, clamped
+  const sizes = Object.keys(INSTALL_COST_PRESETS).map(Number).sort((a,b)=>a-b);
+  if (systemKw <= sizes[0]) return Math.round(systemKw * (INSTALL_COST_PRESETS[sizes[0]] / sizes[0]));
+  if (systemKw >= sizes[sizes.length - 1]) {
+    const lastSize = sizes[sizes.length - 1];
+    const perKw = INSTALL_COST_PRESETS[lastSize] / lastSize;
+    return Math.round(systemKw * perKw);
+  }
+  for (let i = 0; i < sizes.length - 1; i++) {
+    const a = sizes[i], b = sizes[i+1];
+    if (systemKw >= a && systemKw <= b) {
+      const frac = (systemKw - a) / (b - a);
+      return Math.round(INSTALL_COST_PRESETS[a] + frac * (INSTALL_COST_PRESETS[b] - INSTALL_COST_PRESETS[a]));
+    }
+  }
+  return Math.round(systemKw * 900);
+}
+
+// Self-consumption ratio assumption (industry standard for residential, no battery, working-hours-away)
+// Source: Solar Analytics, Australian Energy Council Q1 2025 Solar Report
+const SELF_CONSUMPTION_DEFAULT = 0.30;
+
+// Seasonal distribution of annual generation (Australian southern hemisphere)
+// Approximate: summer high, winter low. Adjusted slightly by zone.
+const SEASONAL_FRACTIONS = {
+  // fractions sum to ~1.0 — what % of annual generation falls in each season
+  summer: 0.31,  // Dec, Jan, Feb
+  autumn: 0.24,  // Mar, Apr, May
+  winter: 0.18,  // Jun, Jul, Aug
+  spring: 0.27   // Sep, Oct, Nov
+};
+
+// Monthly distribution within the year (12 months, Jan–Dec)
+// Approximate Australian solar profile, normalized to 1.0
+const MONTHLY_FRACTIONS = [
+  0.110, // Jan (high summer)
+  0.099, // Feb
+  0.092, // Mar
+  0.077, // Apr
+  0.062, // May
+  0.054, // Jun (deep winter)
+  0.058, // Jul
+  0.072, // Aug
+  0.084, // Sep
+  0.094, // Oct
+  0.098, // Nov
+  0.100  // Dec
+];
+
+const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+/* ---------- 2. Geocoding (Australia-restricted) ---------- */
+
+async function geocode(query) {
+  // Try Nominatim first — request structured address fields
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?format=json&countrycodes=au&limit=1&addressdetails=1&q=${encodeURIComponent(query)}`;
+    const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.length > 0) {
+        const item = data[0];
+        return {
+          lat: parseFloat(item.lat),
+          lon: parseFloat(item.lon),
+          display: item.display_name,
+          postcode: item.address && item.address.postcode ? String(item.address.postcode).trim() : null,
+          source: 'nominatim'
+        };
+      }
+    }
+  } catch (e) { /* fall through */ }
+
+  // Fallback to Photon
+  try {
+    const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=1&osm_tag=:!boundary`;
+    const res = await fetch(url);
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.features && data.features.length > 0) {
+        const f = data.features[0];
+        // Photon doesn't have a country filter we can rely on — verify country
+        const countryCode = f.properties.countrycode;
+        if (countryCode && countryCode.toLowerCase() !== 'au') {
+          return null;
+        }
+        return {
+          lat: f.geometry.coordinates[1],
+          lon: f.geometry.coordinates[0],
+          display: [f.properties.name, f.properties.city, f.properties.state, f.properties.postcode]
+            .filter(Boolean).join(', '),
+          postcode: f.properties.postcode ? String(f.properties.postcode).trim() : null,
+          source: 'photon'
+        };
+      }
+    }
+  } catch (e) { /* fall through */ }
+
+  return null;
+}
+
+// Normalize a postcode to a 4-character string with leading zeros (e.g. "250" -> "0250")
+function normalizePostcode(pc) {
+  if (pc == null) return null;
+  const s = String(pc).trim();
+  // Match 3 or 4 digits — pad to 4
+  const m = s.match(/^(\d{3,4})$/);
+  if (m) return m[1].padStart(4, '0');
+  return null;
+}
+
+// Last-resort: extract a 4-digit run from a free-text string. Used only if structured fields are missing.
+function extractPostcodeFromText(text) {
+  if (!text) return null;
+  const matches = String(text).match(/\b\d{4}\b/g);
+  if (!matches) return null;
+  // Return the LAST 4-digit match — postcodes nearly always come last in AU addresses
+  return matches[matches.length - 1];
+}
+
+/* ---------- 3. NASA POWER data fetch ---------- */
+
+async function fetchNasaPower(lat, lon) {
+  // NASA POWER monthly climatology of all-sky surface shortwave downward irradiance
+  // (ALLSKY_SFC_SW_DWN) in kWh/m^2/day
+  const url = `https://power.larc.nasa.gov/api/temporal/climatology/point?parameters=ALLSKY_SFC_SW_DWN&community=RE&latitude=${lat}&longitude=${lon}&format=JSON`;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const data = await res.json();
+    const monthly = data?.properties?.parameter?.ALLSKY_SFC_SW_DWN;
+    if (!monthly) return null;
+    // monthly is keyed JAN..DEC + ANN
+    const months = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+    const monthlyKwhPerM2PerDay = months.map(m => monthly[m]);
+    if (monthlyKwhPerM2PerDay.some(v => v == null || isNaN(v))) return null;
+    const annualKwhPerM2PerDay = monthly.ANN || (monthlyKwhPerM2PerDay.reduce((a,b)=>a+b,0)/12);
+    return { monthly: monthlyKwhPerM2PerDay, annualPSH: annualKwhPerM2PerDay };
+  } catch (e) {
+    return null;
+  }
+}
+
+/* ---------- 4. Calculation ---------- */
+
+const PERFORMANCE_RATIO = 0.86; // 14% system loss
+
+function calculate(systemKw, postcode, lat, lon, nasaData, overrides) {
+  const cerZone = postcodeToCerZone(postcode);
+  const stcZone = postcodeToStcZone(postcode);
+  const state = postcodeToState(postcode) || 'NSW';
+  overrides = overrides || {};
+
+  let monthlyKwh;        // kWh per month for the system
+  let annualKwh;
+  let peakSunHours;
+  let dataSource;
+
+  if (nasaData) {
+    // NASA POWER: irradiance (kWh/m²/day) → multiply by days in month × system size × PR
+    // To convert irradiance to system output we use: dailyKwh = irradiance × systemKw × PR
+    const daysInMonth = [31,28.25,31,30,31,30,31,31,30,31,30,31];
+    monthlyKwh = nasaData.monthly.map((psh, i) => psh * systemKw * PERFORMANCE_RATIO * daysInMonth[i]);
+    annualKwh = monthlyKwh.reduce((a,b) => a+b, 0);
+    peakSunHours = nasaData.annualPSH;
+    dataSource = 'NASA POWER';
+  } else {
+    // Offline fallback: CER zone baseline × system size, distributed by monthly fractions
+    annualKwh = CER_ZONE_BASELINE_KWH_PER_KW_YEAR[cerZone] * systemKw;
+    monthlyKwh = MONTHLY_FRACTIONS.map(f => annualKwh * f);
+    peakSunHours = CER_ZONE_PEAK_SUN[cerZone];
+    dataSource = 'Offline estimate';
+  }
+
+  // Seasonal aggregation (Australian: Dec+Jan+Feb=summer, etc.)
+  const seasonalDailyKwh = {
+    summer: (monthlyKwh[11] + monthlyKwh[0] + monthlyKwh[1]) / 90,
+    autumn: (monthlyKwh[2] + monthlyKwh[3] + monthlyKwh[4]) / 92,
+    winter: (monthlyKwh[5] + monthlyKwh[6] + monthlyKwh[7]) / 92,
+    spring: (monthlyKwh[8] + monthlyKwh[9] + monthlyKwh[10]) / 91
+  };
+
+  // Best/worst months
+  let bestIdx = 0, worstIdx = 0;
+  monthlyKwh.forEach((v, i) => {
+    if (v > monthlyKwh[bestIdx]) bestIdx = i;
+    if (v < monthlyKwh[worstIdx]) worstIdx = i;
+  });
+
+  // Peak day (best month daily avg × 1.25 for clear-day boost)
+  const peakDay = (monthlyKwh[bestIdx] / 30) * 1.25;
+
+  // Daily average across year
+  const dailyAvg = annualKwh / 365;
+
+  // Coverage of typical home
+  const stateConsumption = STATE_CONSUMPTION[state];
+  const coveragePct = Math.round((annualKwh / stateConsumption) * 100);
+
+  // CO2 offset
+  const co2KgYear = annualKwh * STATE_GRID_CO2[state];
+
+  // ----- Financial calculation -----
+  const retailRate = overrides.retailRate != null ? overrides.retailRate : STATE_RETAIL_RATE[state]; // c/kWh
+  const fitRate = overrides.fitRate != null ? overrides.fitRate : STATE_FIT_MID[state];              // c/kWh
+  const selfConsumption = overrides.selfConsumption != null ? overrides.selfConsumption : SELF_CONSUMPTION_DEFAULT;
+  const installCost = overrides.installCost != null ? overrides.installCost : defaultInstallCost(systemKw); // AUD
+
+  // Annual savings ($) = (gen × self × retail) + (gen × (1-self) × FIT), rates in cents → /100
+  const selfConsumedKwh = annualKwh * selfConsumption;
+  const exportedKwh = annualKwh * (1 - selfConsumption);
+  const annualSavings = (selfConsumedKwh * retailRate / 100) + (exportedKwh * fitRate / 100);
+  const dailySavings = annualSavings / 365;
+  const paybackYears = annualSavings > 0 ? installCost / annualSavings : null;
+
+  return {
+    systemKw,
+    postcode,
+    state,
+    cerZone,
+    stcZone,
+    lat,
+    lon,
+    annualKwh: Math.round(annualKwh),
+    monthlyKwh: monthlyKwh.map(v => Math.round(v)),
+    seasonalDailyKwh,
+    bestMonth: { name: MONTH_NAMES[bestIdx], kwh: Math.round(monthlyKwh[bestIdx]) },
+    worstMonth: { name: MONTH_NAMES[worstIdx], kwh: Math.round(monthlyKwh[worstIdx]) },
+    peakDay: Math.round(peakDay),
+    dailyAvg: Math.round(dailyAvg * 10) / 10,
+    peakSunHours: Math.round(peakSunHours * 10) / 10,
+    coveragePct,
+    stateConsumption,
+    co2KgYear: Math.round(co2KgYear),
+    dataSource,
+    // Financial
+    retailRate,
+    fitRate,
+    selfConsumption,
+    installCost: Math.round(installCost),
+    annualSavings: Math.round(annualSavings),
+    dailySavings: Math.round(dailySavings * 100) / 100,
+    paybackYears: paybackYears != null ? Math.round(paybackYears * 10) / 10 : null
+  };
+}
+
+/* ---------- 5. Rendering ---------- */
+
+let chart = null;
+let currentResult = null;
+
+function animateNumber(el, from, to, duration = 800) {
+  const start = performance.now();
+  const formatter = (n) => n.toLocaleString('en-AU', { maximumFractionDigits: 0 });
+  function step(now) {
+    const t = Math.min(1, (now - start) / duration);
+    // easeOutCubic
+    const eased = 1 - Math.pow(1 - t, 3);
+    const value = from + (to - from) * eased;
+    el.textContent = formatter(Math.round(value));
+    if (t < 1) requestAnimationFrame(step);
+    else el.textContent = formatter(to);
+  }
+  requestAnimationFrame(step);
+}
+
+function renderResults(r) {
+  currentResult = r;
+
+  const today = new Date().toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' });
+  const sizeStr = `${r.systemKw} kW`;
+  const stateLabel = STATE_NAMES[r.state] || r.state;
+
+  // Meta strips (both top and bottom)
+  document.getElementById('metaSize').textContent = sizeStr;
+  document.getElementById('metaSize2').textContent = sizeStr;
+  document.getElementById('metaLocation').textContent = r.locationDisplay;
+  document.getElementById('metaLocation2').textContent = r.locationDisplay;
+  document.getElementById('metaDate').textContent = today;
+  document.getElementById('metaDate2').textContent = today;
+
+  // Hero — lead with $/year savings
+  const heroEl = document.getElementById('heroSavings');
+  animateNumber(heroEl, 0, r.annualSavings);
+  document.getElementById('heroGenKwh').textContent = `~${r.annualKwh.toLocaleString('en-AU')}`;
+  document.getElementById('heroPayback').textContent = r.paybackYears != null ? `~${r.paybackYears} yrs` : '—';
+  // Coverage line — hide entirely when generation exceeds household use (>100%).
+  // Showing "~285%" reads as a math glitch and undermines trust; the kWh + $ already make the size point.
+  const coverageSep = document.getElementById('coverageSep');
+  const coveragePhrase = document.getElementById('coveragePhrase');
+  if (r.coveragePct > 100) {
+    if (coverageSep) coverageSep.style.display = 'none';
+    if (coveragePhrase) coveragePhrase.style.display = 'none';
+  } else {
+    if (coverageSep) coverageSep.style.display = '';
+    if (coveragePhrase) coveragePhrase.style.display = '';
+    document.getElementById('coveragePct').textContent = `~${r.coveragePct}%`;
+    document.getElementById('stateName').textContent = stateLabel;
+  }
+
+  // Seasonal cards
+  const seasonalEl = document.getElementById('seasonal');
+  seasonalEl.querySelectorAll('.season-card').forEach(card => {
+    const season = card.dataset.season;
+    const valEl = card.querySelector('[data-val]');
+    const v = r.seasonalDailyKwh[season];
+    valEl.textContent = (Math.round(v * 10) / 10).toFixed(1);
+  });
+  // Refresh the season-context strip to reflect the currently-active season's value
+  const activeCard = document.querySelector('.season-card.active');
+  if (activeCard) activateSeason(activeCard.dataset.season);
+  else activateSeason('summer');
+
+  // Stat strip
+  document.getElementById('dailyAvgTop').textContent = `${r.dailyAvg.toFixed(1)} kWh`;
+  document.getElementById('cerZone').textContent = `Zone ${r.cerZone}`;
+  document.getElementById('peakSun').textContent = `${r.peakSunHours} hrs/day`;
+  document.getElementById('peakDay').textContent = `${r.peakDay} kWh`;
+
+  // Bottom section stats
+  document.getElementById('annualTotal').textContent = r.annualKwh.toLocaleString('en-AU');
+  document.getElementById('co2Offset').textContent = r.co2KgYear.toLocaleString('en-AU');
+  document.getElementById('bestMonth').textContent = r.bestMonth.name;
+  document.getElementById('bestMonthVal').textContent = `${r.bestMonth.kwh.toLocaleString('en-AU')} kWh`;
+  document.getElementById('worstMonth').textContent = r.worstMonth.name;
+  document.getElementById('worstMonthVal').textContent = `${r.worstMonth.kwh.toLocaleString('en-AU')} kWh`;
+  document.getElementById('fitRange').textContent = STATE_FIT_RANGES[r.state] || '—';
+  document.getElementById('fitNote').textContent = `${r.state} indicative range`;
+  document.getElementById('stcZone').textContent = `Zone ${r.stcZone}`;
+  document.getElementById('dailyAvg').textContent = r.dailyAvg.toFixed(1);
+
+  // vs AU average system
+  const auAvgKw = 7.0;
+  const ratioPct = Math.round((r.systemKw / auAvgKw) * 100);
+  const diff = ratioPct - 100;
+  const vsAvgText = diff === 0 ? 'matches average' :
+    diff > 0 ? `+${diff}% larger` : `${diff}% smaller`;
+  document.getElementById('vsAvg').textContent = vsAvgText;
+
+  // Pricing assumptions panel
+  renderPricingPanel(r);
+
+  // Compare panel
+  renderComparePanel(r);
+
+  // Customer name banner
+  renderNameBanner();
+
+  // Chart
+  renderChart(r.monthlyKwh);
+
+  // Save to recents (only on first render of this calc, not on override-recalc)
+  if (!r.__fromOverride) saveToRecents(r);
+
+  // Show results
+  document.getElementById('results').classList.add('show');
+  document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function renderChart(monthlyKwh) {
+  const options = {
+    chart: {
+      type: 'bar',
+      height: 280,
+      toolbar: { show: false },
+      animations: {
+        enabled: true,
+        easing: 'easeOutCubic',
+        speed: 600
+      },
+      fontFamily: 'Inter, sans-serif',
+      background: 'transparent'
+    },
+    series: [{ name: 'kWh', data: monthlyKwh }],
+    xaxis: {
+      categories: MONTH_NAMES,
+      labels: { style: { colors: '#6B6B6B', fontSize: '11px', fontWeight: 500 } },
+      axisBorder: { show: false },
+      axisTicks: { show: false }
+    },
+    yaxis: {
+      labels: {
+        style: { colors: '#6B6B6B', fontSize: '11px' },
+        formatter: (v) => Math.round(v).toLocaleString('en-AU')
+      }
+    },
+    grid: {
+      borderColor: '#E8E6E3',
+      strokeDashArray: 3,
+      xaxis: { lines: { show: false } }
+    },
+    plotOptions: {
+      bar: {
+        borderRadius: 6,
+        borderRadiusApplication: 'end',
+        columnWidth: '60%'
+      }
+    },
+    fill: {
+      type: 'gradient',
+      gradient: {
+        shade: 'light',
+        type: 'vertical',
+        gradientToColors: ['#F59E0B'],
+        stops: [0, 100],
+        opacityFrom: 1,
+        opacityTo: 0.85
+      }
+    },
+    colors: ['#D97706'],
+    dataLabels: { enabled: false },
+    tooltip: {
+      theme: 'light',
+      y: { formatter: (v) => `${v.toLocaleString('en-AU')} kWh` }
+    }
+  };
+  if (chart) { chart.destroy(); }
+  chart = new ApexCharts(document.querySelector('#monthlyChart'), options);
+  chart.render();
+}
+
+/* ---------- 6. Sun arc rotation ---------- */
+
+// Position the sun dot along the arc based on which season is active.
+// Arc: centre (32,48), radius 24, drawn from (8,48) over the top to (56,48).
+// We parameterize by angle θ measured from the +x axis at the centre, so
+//   θ = 0°   → right endpoint (56, 48)
+//   θ = 90°  → top of arc       (32, 24)  ← summer (sun high)
+//   θ = 180° → left endpoint   (8, 48)
+// Equinoxes (autumn, spring) sit at θ ≈ 60°/120° — sun mid-height.
+// Winter places the sun low-and-rising (north side, θ ≈ 30°).
+function setSunPosition(season) {
+  const dot = document.getElementById('sunDot');
+  if (!dot) return;
+  const angles = { summer: 90, autumn: 60, winter: 30, spring: 120 };
+  const deg = angles[season] != null ? angles[season] : 90;
+  const rad = (deg * Math.PI) / 180;
+  const cx = 32, cy = 48, r = 24;
+  // y is inverted in SVG (down is +y), so subtract r*sin
+  const x = cx + r * Math.cos(rad);
+  const y = cy - r * Math.sin(rad);
+  dot.setAttribute('cx', x.toFixed(2));
+  dot.setAttribute('cy', y.toFixed(2));
+}
+
+/* ---------- 7. UI wiring ---------- */
+
+function showError(msg) {
+  const el = document.getElementById('errorBanner');
+  el.textContent = msg;
+  el.classList.add('show');
+}
+function hideError() {
+  document.getElementById('errorBanner').classList.remove('show');
+}
+
+function setShimmer(on) {
+  document.getElementById('location').classList.toggle('shimmer', on);
+}
+
+function showLoading(on) {
+  document.getElementById('loading').classList.toggle('show', on);
+}
+
+let pendingGeocode = null;
+let busy = false;
+
+function setBusy(on) {
+  busy = on;
+  const calcBtn = document.getElementById('calculateBtn');
+  const yesBtn = document.getElementById('confirmYes');
+  if (calcBtn) calcBtn.disabled = on;
+  if (yesBtn) yesBtn.disabled = on;
+}
+
+async function handleCalculate() {
+  if (busy) return;
+  hideError();
+  document.getElementById('confirmCard').classList.remove('show');
+
+  const sizeRaw = document.getElementById('size').value.trim();
+  const locationRaw = document.getElementById('location').value.trim();
+
+  if (!sizeRaw || isNaN(parseFloat(sizeRaw)) || parseFloat(sizeRaw) <= 0) {
+    showError('Please enter a valid system size in kW.');
+    return;
+  }
+  if (!locationRaw) {
+    showError('Please enter a location (postcode, suburb, or address).');
+    return;
+  }
+
+  const sizeKw = parseFloat(sizeRaw);
+  if (sizeKw > 1000) {
+    showError('System size seems too large — please check the value.');
+    return;
+  }
+
+  // Geocode
+  setBusy(true);
+  setShimmer(true);
+  let geo = null;
+  try {
+    geo = await geocode(locationRaw);
+  } finally {
+    setShimmer(false);
+    setBusy(false);
+  }
+
+  if (!geo) {
+    showError('Couldn\'t find that location in Australia. Try a postcode (e.g. 3029), a suburb name, or a full address.');
+    return;
+  }
+
+  // Show confirm step
+  pendingGeocode = { sizeKw, geo };
+  const confirmCard = document.getElementById('confirmCard');
+  document.getElementById('confirmMatched').textContent = geo.display;
+  confirmCard.classList.add('show');
+  confirmCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+async function runCalculation() {
+  if (busy || !pendingGeocode) return;
+  const { sizeKw, geo } = pendingGeocode;
+  document.getElementById('confirmCard').classList.remove('show');
+
+  // Determine postcode: prefer structured field from geocoder, fall back to text extraction
+  let postcode = normalizePostcode(geo.postcode);
+  if (!postcode) postcode = normalizePostcode(extractPostcodeFromText(geo.display));
+  if (!postcode) postcode = normalizePostcode(extractPostcodeFromText(document.getElementById('location').value));
+  if (!postcode) {
+    showError('Couldn\'t determine the postcode from that location. Try entering a 4-digit postcode directly.');
+    setBusy(false);
+    return;
+  }
+
+  setBusy(true);
+  showLoading(true);
+  let nasaData = null;
+  try {
+    nasaData = await fetchNasaPower(geo.lat, geo.lon);
+  } catch (e) { /* fall through to offline */ }
+  showLoading(false);
+
+  try {
+    // Cache inputs for live recalc when pricing assumptions change
+    lastCalcInputs = { sizeKw, postcode, lat: geo.lat, lon: geo.lon, nasaData, locationDisplay: geo.display };
+    pricingOverrides = {}; // reset overrides on a new calc
+    const result = calculate(sizeKw, postcode, geo.lat, geo.lon, nasaData);
+    result.locationDisplay = geo.display;
+    renderResults(result);
+  } catch (e) {
+    showError('Something went wrong while calculating. Please try again.');
+  } finally {
+    setBusy(false);
+    pendingGeocode = null;
+  }
+}
+
+// Cached inputs for live recalc + per-customer pricing overrides
+let lastCalcInputs = null;
+let pricingOverrides = {};
+
+function recalcWithOverrides() {
+  if (!lastCalcInputs) return;
+  const { sizeKw, postcode, lat, lon, nasaData, locationDisplay } = lastCalcInputs;
+  const result = calculate(sizeKw, postcode, lat, lon, nasaData, pricingOverrides);
+  result.locationDisplay = locationDisplay;
+  result.__fromOverride = true;
+  renderResults(result);
+}
+
+function renderPricingPanel(r) {
+  const fmtCents = (v) => `${(Math.round(v * 10) / 10).toFixed(1)}¢`;
+  const fmtPct = (v) => `${Math.round(v * 100)}%`;
+  const fmtMoney = (v) => `$${v.toLocaleString('en-AU')}`;
+  document.getElementById('editRetail').textContent = fmtCents(r.retailRate);
+  document.getElementById('editFit').textContent = fmtCents(r.fitRate);
+  document.getElementById('editSelf').textContent = fmtPct(r.selfConsumption);
+  document.getElementById('editInstall').textContent = fmtMoney(r.installCost);
+  // mark "changed" if user overrode it
+  ['retailRate','fitRate','selfConsumption','installCost'].forEach(k => {
+    const id = { retailRate:'editRetail', fitRate:'editFit', selfConsumption:'editSelf', installCost:'editInstall' }[k];
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('changed', pricingOverrides[k] != null);
+  });
+}
+
+function parsePricingValue(field, raw) {
+  // Strip everything except digits, dot, percent — accept "28c", "28¢", "$8800", "30%"
+  if (raw == null) return null;
+  const s = String(raw).trim();
+  const m = s.match(/-?\d+(\.\d+)?/);
+  if (!m) return null;
+  let n = parseFloat(m[0]);
+  if (isNaN(n)) return null;
+  if (field === 'selfConsumption') {
+    // Accept either "30" or "0.3" — both meaning 30%
+    if (n > 1) n = n / 100;
+    if (n < 0) n = 0;
+    if (n > 1) n = 1;
+  }
+  if (field === 'retailRate' || field === 'fitRate') {
+    if (n < 0) n = 0;
+    if (n > 200) n = 200;
+  }
+  if (field === 'installCost') {
+    if (n < 0) n = 0;
+    if (n > 1000000) n = 1000000;
+  }
+  return n;
+}
+
+// ----- Compare panel (3 sizes side-by-side) -----
+let compareSizes = [6.6, 10, 13.2];
+// Per-card install cost overrides. Index-aligned with compareSizes. null = use the size-derived default.
+let compareInstallOverrides = [null, null, null];
+
+function calcForCompare(sizeKw, idx) {
+  if (!lastCalcInputs) return null;
+  const { postcode, lat, lon, nasaData } = lastCalcInputs;
+  // Compare cards use SAME rate/FIT/self-consumption overrides as main result.
+  // Install cost is per-card: defaults to the size-derived preset, or uses the user's per-card override.
+  const overrides = Object.assign({}, pricingOverrides);
+  delete overrides.installCost;
+  if (idx != null && compareInstallOverrides[idx] != null) {
+    overrides.installCost = compareInstallOverrides[idx];
+  }
+  return calculate(sizeKw, postcode, lat, lon, nasaData, overrides);
+}
+
+function renderComparePanel(currentResult) {
+  const grid = document.getElementById('compareGrid');
+  if (!grid || !lastCalcInputs) return;
+  grid.innerHTML = '';
+  compareSizes.forEach((size, idx) => {
+    const r = calcForCompare(size, idx);
+    if (!r) return;
+    const isCurrent = Math.abs(size - currentResult.systemKw) < 0.01;
+    const isCustomCost = compareInstallOverrides[idx] != null;
+    const card = document.createElement('div');
+    card.className = 'compare-card' + (isCurrent ? ' is-current' : '');
+    card.innerHTML = `
+      <div class="compare-card-head">
+        <div>
+          <span class="compare-size" contenteditable="true" inputmode="decimal" data-compare-idx="${idx}">${size}</span><span class="compare-size-unit">kW</span>
+        </div>
+        ${isCurrent ? '<span class="compare-current-tag">Current</span>' : ''}
+      </div>
+      <div class="compare-row hero-row">
+        <span class="k">Bill saving</span>
+        <span class="v">$${r.annualSavings.toLocaleString('en-AU')}/yr</span>
+      </div>
+      <div class="compare-row">
+        <span class="k">Generation</span>
+        <span class="v">${r.annualKwh.toLocaleString('en-AU')} kWh/yr</span>
+      </div>
+      <div class="compare-row">
+        <span class="k">Payback</span>
+        <span class="v">${r.paybackYears != null ? '~' + r.paybackYears + ' yrs' : '—'}</span>
+      </div>
+      <div class="compare-row">
+        <span class="k">Install cost${isCustomCost ? ' <span class="custom-tag" title="Custom price">·</span>' : ''}</span>
+        <span class="v">$<span class="compare-install" contenteditable="true" inputmode="numeric" data-compare-idx="${idx}">${r.installCost.toLocaleString('en-AU')}</span></span>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+  // Wire size editing
+  grid.querySelectorAll('.compare-size').forEach(el => {
+    el.addEventListener('blur', () => {
+      const idx = parseInt(el.dataset.compareIdx, 10);
+      const raw = String(el.textContent || '').replace(/[^0-9.]/g, '');
+      let n = parseFloat(raw);
+      if (isNaN(n) || n <= 0 || n > 200) {
+        renderComparePanel(currentResult);
+        return;
+      }
+      n = Math.round(n * 100) / 100;
+      // Changing the size resets the per-card install override — let the new size's preset take over.
+      // (User can still re-edit the install cost for the new size if they want.)
+      if (Math.abs(compareSizes[idx] - n) > 0.001) {
+        compareInstallOverrides[idx] = null;
+      }
+      compareSizes[idx] = n;
+      renderComparePanel(currentResult);
+    });
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); el.blur(); }
+      if (e.key === 'Escape') { e.preventDefault(); renderComparePanel(currentResult); }
+    });
+  });
+  // Wire install-cost editing
+  grid.querySelectorAll('.compare-install').forEach(el => {
+    el.addEventListener('blur', () => {
+      const idx = parseInt(el.dataset.compareIdx, 10);
+      // Strip $, commas, spaces — accept "8,800", "$8800", "8 800" etc.
+      const raw = String(el.textContent || '').replace(/[^0-9.]/g, '');
+      let n = parseFloat(raw);
+      // Sanity: positive, between $500 and $200,000 (covers tiny systems through commercial)
+      if (isNaN(n) || n < 500 || n > 200000) {
+        renderComparePanel(currentResult);
+        return;
+      }
+      n = Math.round(n);
+      compareInstallOverrides[idx] = n;
+      renderComparePanel(currentResult);
+    });
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); el.blur(); }
+      if (e.key === 'Escape') { e.preventDefault(); renderComparePanel(currentResult); }
+    });
+    // Select-all on focus so the user can immediately overwrite
+    el.addEventListener('focus', () => {
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    });
+  });
+}
+
+function setupCompare() {
+  // Compare panel renders inside renderResults; nothing else to wire on init.
+}
+
+// ----- Customer name banner -----
+function getCustomerName() {
+  const el = document.getElementById('customerName');
+  return el ? String(el.value || '').trim() : '';
+}
+
+function renderNameBanner() {
+  const name = getCustomerName();
+  // Old chip-style banners (kept for the bottom section, but hidden on top — hero greeting replaces it)
+  ['nameBannerTop','nameBannerBottom'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (name) {
+      el.textContent = `Quote prepared for ${name}`;
+      el.style.display = '';
+    } else {
+      el.textContent = '';
+      el.style.display = 'none';
+    }
+  });
+  // Hide the chip banner on the top section — the hero greeting now carries the name there
+  const topBanner = document.getElementById('nameBannerTop');
+  if (topBanner) topBanner.style.display = 'none';
+  // Hero greeting in the sunny gradient card
+  const greet = document.getElementById('heroGreeting');
+  if (greet) {
+    greet.textContent = name ? `Hi ${name},` : '';
+  }
+}
+
+// ----- Share buttons (WhatsApp + Copy) -----
+function buildShareMessage(r) {
+  if (!r) return '';
+  const name = getCustomerName();
+  const greet = name ? `Hi ${name}, ` : '';
+  const suburb = (r.locationDisplay || '').split(',')[0];
+  const sizeStr = `${r.systemKw}kW`;
+  const savings = `~$${r.annualSavings.toLocaleString('en-AU')}/yr`;
+  const gen = `~${r.annualKwh.toLocaleString('en-AU')} kWh/yr`;
+  const payback = r.paybackYears != null ? `~${r.paybackYears}-year payback` : '';
+  const parts = [
+    `${greet}for a ${sizeStr} solar system at ${suburb}:`,
+    `• Bill savings: ${savings}`,
+    `• Generation: ${gen}`,
+    payback ? `• ${payback}` : null,
+    '',
+    'Full breakdown coming through.'
+  ].filter(Boolean);
+  return parts.join('\n');
+}
+
+function setupShareButtons() {
+  const wa = document.getElementById('shareWhatsapp');
+  const cp = document.getElementById('shareCopy');
+  if (wa) wa.addEventListener('click', () => {
+    if (!currentResult) return;
+    const msg = buildShareMessage(currentResult);
+    const url = `https://wa.me/?text=${encodeURIComponent(msg)}`;
+    window.open(url, '_blank', 'noopener');
+  });
+  if (cp) cp.addEventListener('click', async () => {
+    if (!currentResult) return;
+    const msg = buildShareMessage(currentResult);
+    try {
+      await navigator.clipboard.writeText(msg);
+      cp.textContent = '✓ Copied';
+      setTimeout(() => { cp.textContent = '📋 Copy message'; }, 1800);
+    } catch (e) {
+      // Fallback
+      const ta = document.createElement('textarea');
+      ta.value = msg;
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); cp.textContent = '✓ Copied'; }
+      catch (e2) { cp.textContent = 'Copy failed'; }
+      document.body.removeChild(ta);
+      setTimeout(() => { cp.textContent = '📋 Copy message'; }, 1800);
+    }
+  });
+  // Wire same handlers to the bottom-section copies
+  const wa2 = document.getElementById('shareWhatsapp2');
+  const cp2 = document.getElementById('shareCopy2');
+  if (wa2) wa2.addEventListener('click', () => document.getElementById('shareWhatsapp').click());
+  if (cp2) cp2.addEventListener('click', () => document.getElementById('shareCopy').click());
+}
+
+// ----- Recents (last 10 calcs in localStorage) -----
+const RECENTS_KEY = 'solarProduction_recents_v1';
+const RECENTS_MAX = 10;
+
+function loadRecents() {
+  try {
+    const raw = localStorage.getItem(RECENTS_KEY);
+    if (!raw) return [];
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr : [];
+  } catch (e) { return []; }
+}
+
+function saveRecents(arr) {
+  try { localStorage.setItem(RECENTS_KEY, JSON.stringify(arr.slice(0, RECENTS_MAX))); }
+  catch (e) { /* localStorage unavailable; silently ignore */ }
+}
+
+function saveToRecents(r) {
+  if (!lastCalcInputs) return;
+  const recents = loadRecents();
+  const entry = {
+    ts: Date.now(),
+    customerName: getCustomerName(),
+    sizeKw: r.systemKw,
+    location: r.locationDisplay,
+    postcode: r.postcode,
+    annualSavings: r.annualSavings,
+    annualKwh: r.annualKwh,
+    paybackYears: r.paybackYears
+  };
+  // Dedupe: same postcode + size + name within 5 minutes overwrites previous
+  const filtered = recents.filter(e => !(e.postcode === entry.postcode && e.sizeKw === entry.sizeKw && e.customerName === entry.customerName));
+  filtered.unshift(entry);
+  saveRecents(filtered);
+  renderRecents();
+}
+
+function renderRecents() {
+  const list = document.getElementById('recentsList');
+  if (!list) return;
+  const recents = loadRecents();
+  if (!recents.length) {
+    list.innerHTML = '<li class="recents-empty">No recent calculations yet. Your last 10 will appear here.</li>';
+    return;
+  }
+  list.innerHTML = recents.map((e, i) => {
+    const when = new Date(e.ts).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' });
+    const namePart = e.customerName ? `<strong>${escapeHtml(e.customerName)}</strong> · ` : '';
+    const loc = (e.location || '').split(',').slice(0, 2).join(',');
+    return `<li class="recent-item" data-recent-idx="${i}">
+      <div class="recent-line1">${namePart}${e.sizeKw}kW · $${(e.annualSavings || 0).toLocaleString('en-AU')}/yr</div>
+      <div class="recent-line2">${escapeHtml(loc)} · ${when}</div>
+    </li>`;
+  }).join('');
+  list.querySelectorAll('.recent-item').forEach(li => {
+    li.addEventListener('click', () => {
+      const idx = parseInt(li.dataset.recentIdx, 10);
+      const e = loadRecents()[idx];
+      if (!e) return;
+      // Re-load inputs and trigger calculate
+      document.getElementById('customerName').value = e.customerName || '';
+      document.getElementById('size').value = e.sizeKw;
+      document.getElementById('location').value = e.location || e.postcode;
+      handleCalculate();
+    });
+  });
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+
+function setupRecents() {
+  renderRecents();
+  const customerEl = document.getElementById('customerName');
+  if (customerEl) {
+    customerEl.addEventListener('blur', () => {
+      // Re-render the screenshot-friendly banner if a calc has been run
+      if (currentResult) renderNameBanner();
+    });
+  }
+  const clearBtn = document.getElementById('recentsClear');
+  if (clearBtn) {
+    clearBtn.addEventListener('click', () => {
+      if (!confirm('Clear all recent calculations? (Cannot be undone.)')) return;
+      saveRecents([]);
+      renderRecents();
+    });
+  }
+}
+
+function setupPricingPanel() {
+  const fields = ['editRetail','editFit','editSelf','editInstall'];
+  fields.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('blur', () => {
+      const field = el.dataset.field;
+      const newVal = parsePricingValue(field, el.textContent);
+      if (newVal == null) {
+        recalcWithOverrides(); // re-render to restore display
+        return;
+      }
+      pricingOverrides[field] = newVal;
+      recalcWithOverrides();
+    });
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); el.blur(); }
+      if (e.key === 'Escape') { e.preventDefault(); recalcWithOverrides(); }
+    });
+  });
+  const resetBtn = document.getElementById('resetPricing');
+  if (resetBtn) {
+    resetBtn.addEventListener('click', () => {
+      pricingOverrides = {};
+      recalcWithOverrides();
+    });
+  }
+}
+
+const SEASON_DISPLAY = {
+  summer: 'Summer (Dec–Feb)',
+  autumn: 'Autumn (Mar–May)',
+  winter: 'Winter (Jun–Aug)',
+  spring: 'Spring (Sep–Nov)'
+};
+
+function activateSeason(season) {
+  const cards = document.querySelectorAll('.season-card');
+  cards.forEach(c => {
+    const isActive = c.dataset.season === season;
+    c.classList.toggle('active', isActive);
+    c.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+  });
+  setSunPosition(season);
+  // Update the season context strip
+  const nameEl = document.getElementById('seasonContextName');
+  const valEl = document.getElementById('seasonContextValue');
+  if (nameEl) nameEl.textContent = SEASON_DISPLAY[season] || season;
+  if (valEl && currentResult) {
+    const v = currentResult.seasonalDailyKwh[season];
+    valEl.textContent = `${(Math.round(v * 10) / 10).toFixed(1)} kWh`;
+  }
+}
+
+function setupSeasonalTabs() {
+  const cards = document.querySelectorAll('.season-card');
+  cards.forEach(card => {
+    card.setAttribute('role', 'button');
+    card.setAttribute('tabindex', '0');
+    card.setAttribute('aria-pressed', 'false');
+    const handler = () => activateSeason(card.dataset.season);
+    card.addEventListener('click', handler);
+    card.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        handler();
+      }
+    });
+  });
+  // Default: summer active
+  activateSeason('summer');
+}
+
+// Toast helper — shows a transient message at the top of the viewport
+let toastTimer = null;
+function showToast(message, kind) {
+  const el = document.getElementById('toast');
+  if (!el) return;
+  el.textContent = message;
+  el.classList.remove('error', 'success');
+  if (kind) el.classList.add(kind);
+  el.classList.add('show');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2400);
+}
+
+// Trigger a download as fallback when clipboard API isn't available
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => {
+    URL.revokeObjectURL(url);
+    a.remove();
+  }, 0);
+}
+
+// Capture the framed screenshot view and copy the PNG to the clipboard
+async function captureAndCopy(which) {
+  if (typeof html2canvas !== 'function') {
+    showToast('Screenshot library failed to load — check your connection', 'error');
+    return;
+  }
+  // Show feedback BEFORE applying the capturing class (which hides the toast)
+  showToast('Capturing…');
+
+  // Apply frame, jump to top WITHOUT smooth scroll (smooth scroll breaks html2canvas timing)
+  document.body.classList.remove('screenshot-top', 'screenshot-bottom');
+  document.body.classList.add(`screenshot-${which}`);
+  document.body.classList.add('capturing');
+  window.scrollTo(0, 0);
+
+  // Wait for fonts to load (gradient + Inter weights)
+  try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch (e) {}
+
+  // Force a reflow so the screenshot-top/bottom CSS hides + repaints before capture
+  // Reading offsetHeight forces synchronous layout
+  void document.body.offsetHeight;
+
+  // Wait two animation frames + a settle delay so any pending reflow/paint completes.
+  // This kills the "half-rendered with vertical seam" bug.
+  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+  await new Promise(r => setTimeout(r, 500));
+
+  const target = document.querySelector('.container') || document.body;
+
+  try {
+    const rect = target.getBoundingClientRect();
+    const canvas = await html2canvas(target, {
+      backgroundColor: getComputedStyle(document.body).backgroundColor || '#F5F0E8',
+      scale: 2,
+      useCORS: true,
+      allowTaint: false,
+      logging: false,
+      width: Math.ceil(rect.width),
+      height: Math.ceil(target.scrollHeight),
+      windowWidth: document.documentElement.clientWidth,
+      windowHeight: Math.max(document.documentElement.scrollHeight, target.scrollHeight),
+      x: 0,
+      y: 0,
+      scrollX: 0,
+      scrollY: 0
+    });
+
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+    if (!blob) throw new Error('Canvas produced no blob');
+
+    // Try clipboard image write
+    let copied = false;
+    if (navigator.clipboard && window.ClipboardItem) {
+      try {
+        await navigator.clipboard.write([
+          new ClipboardItem({ 'image/png': blob })
+        ]);
+        copied = true;
+      } catch (err) {
+        copied = false;
+      }
+    }
+
+    if (copied) {
+      showToast('Screenshot copied — paste it into WhatsApp', 'success');
+    } else {
+      // Fallback: download the PNG
+      const stamp = new Date().toISOString().slice(0, 10);
+      downloadBlob(blob, `solar-${which}-${stamp}.png`);
+      showToast('Clipboard blocked — saved as a file instead', 'success');
+    }
+  } catch (err) {
+    console.error('Screenshot capture failed', err);
+    showToast('Capture failed — try the OS screenshot shortcut', 'error');
+  } finally {
+    document.body.classList.remove('capturing');
+  }
+}
+
+function setupScreenshotButtons() {
+  document.querySelectorAll('[data-screenshot]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const which = btn.dataset.screenshot;
+      captureAndCopy(which);
+    });
+  });
+  document.getElementById('exitScreenshot').addEventListener('click', () => {
+    document.body.classList.remove('screenshot-top', 'screenshot-bottom');
+  });
+  // ESC key exits
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      document.body.classList.remove('screenshot-top', 'screenshot-bottom');
+    }
+  });
+}
+
+function setupAdvancedToggle() {
+  const toggle = document.getElementById('advancedToggle');
+  const panel = document.getElementById('advancedPanel');
+  const flip = () => {
+    const open = panel.classList.toggle('open');
+    toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+  };
+  toggle.addEventListener('click', flip);
+  toggle.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); flip(); }
+  });
+}
+
+function setupReadyPulse() {
+  // Pulse the calculate button once when both inputs become valid
+  const size = document.getElementById('size');
+  const loc = document.getElementById('location');
+  const btn = document.getElementById('calculateBtn');
+  let hasPulsed = false;
+  const check = () => {
+    const ok = size.value.trim() && loc.value.trim() && parseFloat(size.value) > 0;
+    if (ok && !hasPulsed) {
+      btn.classList.add('ready');
+      hasPulsed = true;
+      setTimeout(() => btn.classList.remove('ready'), 900);
+    }
+    if (!ok) hasPulsed = false;
+  };
+  size.addEventListener('input', check);
+  loc.addEventListener('input', check);
+}
+
+/* ---------- 8. Init ---------- */
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('calculateBtn').addEventListener('click', handleCalculate);
+  document.getElementById('confirmYes').addEventListener('click', runCalculation);
+  document.getElementById('confirmNo').addEventListener('click', () => {
+    document.getElementById('confirmCard').classList.remove('show');
+    document.getElementById('location').focus();
+  });
+  // Enter key in either input triggers calculate
+  ['size','location'].forEach(id => {
+    document.getElementById(id).addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') handleCalculate();
+    });
+  });
+  setupAdvancedToggle();
+  setupSeasonalTabs();
+  setupScreenshotButtons();
+  setupReadyPulse();
+  setupPricingPanel();
+  setupCompare();
+  setupShareButtons();
+  setupRecents();
+});
+</script>
+
+</body>
+</html>
