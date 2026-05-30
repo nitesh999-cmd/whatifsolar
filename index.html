@@ -424,6 +424,51 @@
     margin-bottom: 4px;
   }
 
+  /* v1.4 — Production-led hero (kWh is the headline, $/year becomes subtitle) */
+  .hero .hero-kwh-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: rgba(255, 255, 255, 0.85);
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .hero .hero-kwh {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 8px;
+    line-height: 1;
+  }
+  .hero .hero-kwh-number {
+    font-size: clamp(56px, 11vw, 96px);
+    font-weight: 800;
+    letter-spacing: -0.035em;
+    line-height: 1;
+    color: #fff;
+    margin: 0;
+    display: inline-block;
+    text-shadow: 0 2px 8px rgba(146, 64, 14, 0.35);
+  }
+  .hero .hero-kwh-unit {
+    font-size: clamp(20px, 3vw, 28px);
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.92);
+    align-self: baseline;
+    text-shadow: 0 1px 4px rgba(146, 64, 14, 0.25);
+  }
+  .hero .hero-bill {
+    margin-top: 10px;
+    font-size: clamp(14px, 1.8vw, 16px);
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.92);
+    line-height: 1.4;
+  }
+  .hero .hero-bill strong {
+    color: #fff;
+    font-weight: 700;
+  }
+
   .hero .hero-amount {
     display: flex;
     align-items: baseline;
@@ -1077,14 +1122,15 @@
           <line x1="8" y1="48" x2="56" y2="48" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
         </svg>
         <div class="hero-greeting" id="heroGreeting"></div>
-        <div class="hero-prefix">Reduce your bill by</div>
-        <div class="hero-amount">
-          <span class="hero-currency">$</span><span class="number" id="heroSavings">0</span><span class="unit">/ year</span>
+        <div class="hero-kwh-label">Average annual production</div>
+        <div class="hero-kwh">
+          <span class="hero-kwh-number" id="heroGenKwh">—</span><span class="hero-kwh-unit">kWh</span>
         </div>
+        <p class="hero-bill">
+          Reduces your bill by <strong>$<span id="heroSavings">0</span></strong> / year
+        </p>
         <div class="horizon"></div>
         <p class="subtitle">
-          <strong id="heroGenKwh">—</strong> kWh production
-          <span class="hero-sep">·</span>
           <strong id="heroPayback">—</strong> payback
           <span class="hero-sep coverage-sep" id="coverageSep">·</span>
           <span id="coveragePhrase">covers <strong id="coveragePct">—</strong> of an avg <span id="stateName">—</span> home</span>
@@ -1753,10 +1799,11 @@ function renderResults(r) {
   document.getElementById('metaDate').textContent = today;
   document.getElementById('metaDate2').textContent = today;
 
-  // Hero — lead with $/year savings
-  const heroEl = document.getElementById('heroSavings');
-  animateNumber(heroEl, 0, r.annualSavings);
-  document.getElementById('heroGenKwh').textContent = `~${r.annualKwh.toLocaleString('en-AU')}`;
+  // Hero — lead with kWh production (v1.4: production-first hierarchy)
+  const heroKwhEl = document.getElementById('heroGenKwh');
+  animateNumber(heroKwhEl, 0, r.annualKwh);
+  // Bill savings becomes secondary subtitle — no animation, just set text
+  document.getElementById('heroSavings').textContent = r.annualSavings.toLocaleString('en-AU');
   document.getElementById('heroPayback').textContent = r.paybackYears != null ? `~${r.paybackYears} yrs` : '—';
   // Coverage line — hide entirely when generation exceeds household use (>100%).
   // Showing "~285%" reads as a math glitch and undermines trust; the kWh + $ already make the size point.
@@ -2251,39 +2298,55 @@ function buildShareMessage(r) {
   return parts.join('\n');
 }
 
-function setupShareButtons() {
-  const wa = document.getElementById('shareWhatsapp');
-  const cp = document.getElementById('shareCopy');
-  if (wa) wa.addEventListener('click', () => {
-    if (!currentResult) return;
+// v1.4 — copy-message handler factory. Returns an async click handler bound to a specific
+// button element so feedback ("✓ Copied") appears on the button the user actually clicked.
+function makeCopyMessageHandler(btnEl) {
+  return async () => {
+    if (!currentResult) {
+      // Give the user a hint instead of silently doing nothing
+      if (typeof showToast === 'function') showToast('Run a calculation first', 'error');
+      return;
+    }
     const msg = buildShareMessage(currentResult);
-    const url = `https://wa.me/?text=${encodeURIComponent(msg)}`;
-    window.open(url, '_blank', 'noopener');
-  });
-  if (cp) cp.addEventListener('click', async () => {
-    if (!currentResult) return;
-    const msg = buildShareMessage(currentResult);
+    const originalLabel = '📋 Copy message';
     try {
       await navigator.clipboard.writeText(msg);
-      cp.textContent = '✓ Copied';
-      setTimeout(() => { cp.textContent = '📋 Copy message'; }, 1800);
+      btnEl.textContent = '✓ Copied';
     } catch (e) {
-      // Fallback
+      // Fallback to legacy execCommand
       const ta = document.createElement('textarea');
       ta.value = msg;
       document.body.appendChild(ta);
       ta.select();
-      try { document.execCommand('copy'); cp.textContent = '✓ Copied'; }
-      catch (e2) { cp.textContent = 'Copy failed'; }
+      try { document.execCommand('copy'); btnEl.textContent = '✓ Copied'; }
+      catch (e2) { btnEl.textContent = 'Copy failed'; }
       document.body.removeChild(ta);
-      setTimeout(() => { cp.textContent = '📋 Copy message'; }, 1800);
     }
+    setTimeout(() => { btnEl.textContent = originalLabel; }, 1800);
+  };
+}
+
+function makeWhatsAppHandler() {
+  return () => {
+    if (!currentResult) {
+      if (typeof showToast === 'function') showToast('Run a calculation first', 'error');
+      return;
+    }
+    const msg = buildShareMessage(currentResult);
+    const url = `https://wa.me/?text=${encodeURIComponent(msg)}`;
+    window.open(url, '_blank', 'noopener');
+  };
+}
+
+function setupShareButtons() {
+  // Wire ALL copy-message buttons by class — supports top + bottom + any future additions.
+  // This replaces the brittle getElementById('shareCopy2')→.click() proxy that hid duplicate-ID bugs.
+  document.querySelectorAll('.btn-share[id^="shareCopy"]').forEach(btn => {
+    btn.addEventListener('click', makeCopyMessageHandler(btn));
   });
-  // Wire same handlers to the bottom-section copies
-  const wa2 = document.getElementById('shareWhatsapp2');
-  const cp2 = document.getElementById('shareCopy2');
-  if (wa2) wa2.addEventListener('click', () => document.getElementById('shareWhatsapp').click());
-  if (cp2) cp2.addEventListener('click', () => document.getElementById('shareCopy').click());
+  document.querySelectorAll('.btn-share[id^="shareWhatsapp"]').forEach(btn => {
+    btn.addEventListener('click', makeWhatsAppHandler());
+  });
 }
 
 // ----- Recents (last 10 calcs in localStorage) -----
@@ -2478,12 +2541,22 @@ function downloadBlob(blob, filename) {
   }, 0);
 }
 
-// Capture the framed screenshot view and copy the PNG to the clipboard
+// Capture the framed screenshot view and copy the PNG to the clipboard.
+// v1.5 — fixes "save as file" regression. Chrome enforces a ~5s window between the
+// user click and the clipboard.write call for IMAGE payloads. With scale 2 + large
+// solar pages, html2canvas often takes 4–6s, blowing past that window and triggering
+// the download fallback. The fix is the documented Chrome pattern: pass a Promise<Blob>
+// INSIDE the ClipboardItem, called synchronously inside the click handler. Chrome
+// registers the clipboard intent during the gesture, then accepts the blob when it
+// resolves. Source: https://developer.chrome.com/blog/cross-browser-clipboard/
 async function captureAndCopy(which) {
   if (typeof html2canvas !== 'function') {
     showToast('Screenshot library failed to load — check your connection', 'error');
     return;
   }
+  // Guard against double-clicks while a capture is already running.
+  if (document.body.classList.contains('capturing')) return;
+
   // Show feedback BEFORE applying the capturing class (which hides the toast)
   showToast('Capturing…');
 
@@ -2493,75 +2566,130 @@ async function captureAndCopy(which) {
   document.body.classList.add('capturing');
   window.scrollTo(0, 0);
 
-  // Wait for fonts to load (gradient + Inter weights)
-  try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch (e) {}
+  // Hard safety: lift capturing state no matter what after 15s, so the page never stays frozen.
+  const safetyTimer = setTimeout(() => {
+    document.body.classList.remove('capturing', 'screenshot-top', 'screenshot-bottom');
+    showToast('Screenshot timed out — try the OS shortcut', 'error');
+  }, 15000);
 
-  // Force a reflow so the screenshot-top/bottom CSS hides + repaints before capture
-  // Reading offsetHeight forces synchronous layout
-  void document.body.offsetHeight;
+  function raceWithTimeout(promise, ms, label) {
+    return Promise.race([
+      promise,
+      new Promise((_, reject) => setTimeout(() => reject(new Error(label + ' timeout')), ms))
+    ]);
+  }
 
-  // Wait two animation frames + a settle delay so any pending reflow/paint completes.
-  // This kills the "half-rendered with vertical seam" bug.
-  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
-  await new Promise(r => setTimeout(r, 500));
+  // Build a Promise<Blob> that does the actual capture work.
+  // This is what we'll hand to ClipboardItem — Chrome will await it during the
+  // ongoing clipboard write, keeping the user-gesture context alive.
+  const blobPromise = (async () => {
+    try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch (e) {}
+    void document.body.offsetHeight;
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+    await new Promise(r => setTimeout(r, 400));
 
-  const target = document.querySelector('.container') || document.body;
-
-  try {
+    const target = document.querySelector('.container') || document.body;
     const rect = target.getBoundingClientRect();
-    const canvas = await html2canvas(target, {
-      backgroundColor: getComputedStyle(document.body).backgroundColor || '#F5F0E8',
-      scale: 2,
-      useCORS: true,
-      allowTaint: false,
-      logging: false,
-      width: Math.ceil(rect.width),
-      height: Math.ceil(target.scrollHeight),
-      windowWidth: document.documentElement.clientWidth,
-      windowHeight: Math.max(document.documentElement.scrollHeight, target.scrollHeight),
-      x: 0,
-      y: 0,
-      scrollX: 0,
-      scrollY: 0
-    });
-
+    const canvas = await raceWithTimeout(
+      html2canvas(target, {
+        backgroundColor: getComputedStyle(document.body).backgroundColor || '#F5F0E8',
+        scale: 1.5,
+        useCORS: true,
+        allowTaint: false,
+        logging: false,
+        width: Math.ceil(rect.width),
+        height: Math.ceil(target.scrollHeight),
+        windowWidth: document.documentElement.clientWidth,
+        windowHeight: Math.max(document.documentElement.scrollHeight, target.scrollHeight),
+        x: 0,
+        y: 0,
+        scrollX: 0,
+        scrollY: 0
+      }),
+      10000,
+      'html2canvas'
+    );
     const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
     if (!blob) throw new Error('Canvas produced no blob');
+    return blob;
+  })();
 
-    // Try clipboard image write
-    let copied = false;
-    if (navigator.clipboard && window.ClipboardItem) {
-      try {
-        await navigator.clipboard.write([
-          new ClipboardItem({ 'image/png': blob })
-        ]);
+  let copied = false;
+  let capturedBlob = null;
+
+  // Path A — Chrome / Edge / modern Safari: pass the Promise<Blob> to ClipboardItem
+  // and call clipboard.write SYNCHRONOUSLY (no await on blobPromise first).
+  // Chrome considers this a single clipboard write registered during the user gesture.
+  if (navigator.clipboard && window.ClipboardItem) {
+    try {
+      // Mirror the blob so we still have it for the download fallback if clipboard write fails.
+      const mirroredBlobPromise = blobPromise.then(b => { capturedBlob = b; return b; });
+      await navigator.clipboard.write([
+        new ClipboardItem({ 'image/png': mirroredBlobPromise })
+      ]);
+      copied = true;
+    } catch (err) {
+      // Some Firefox versions reject ClipboardItem-with-Promise. Fall through to Path B.
+      copied = false;
+    }
+  }
+
+  // Path B (fallback) — if Path A rejected, the blob may already be resolved.
+  // Try the legacy "await blob, then write" pattern as a second attempt.
+  if (!copied) {
+    try {
+      const blob = capturedBlob || await blobPromise;
+      capturedBlob = blob;
+      if (navigator.clipboard && window.ClipboardItem) {
+        await raceWithTimeout(
+          navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]),
+          3500,
+          'clipboard'
+        );
         copied = true;
-      } catch (err) {
-        copied = false;
       }
+    } catch (err) {
+      copied = false;
     }
+  }
 
-    if (copied) {
-      showToast('Screenshot copied — paste it into WhatsApp', 'success');
-    } else {
-      // Fallback: download the PNG
-      const stamp = new Date().toISOString().slice(0, 10);
-      downloadBlob(blob, `solar-${which}-${stamp}.png`);
-      showToast('Clipboard blocked — saved as a file instead', 'success');
-    }
-  } catch (err) {
-    console.error('Screenshot capture failed', err);
+  // Unfreeze the UI now that all clipboard attempts have settled.
+  document.body.classList.remove('capturing');
+  clearTimeout(safetyTimer);
+
+  if (copied) {
+    showToast('Screenshot copied — paste it into WhatsApp', 'success');
+    return;
+  }
+
+  // Clipboard write failed in BOTH paths. Only NOW fall back to file download —
+  // but only if we actually have a blob (otherwise the capture itself failed).
+  if (capturedBlob) {
+    const stamp = new Date().toISOString().slice(0, 10);
+    downloadBlob(capturedBlob, `solar-${which}-${stamp}.png`);
+    showToast('Clipboard blocked — saved as a file instead', 'success');
+  } else {
     showToast('Capture failed — try the OS screenshot shortcut', 'error');
-  } finally {
-    document.body.classList.remove('capturing');
   }
 }
 
 function setupScreenshotButtons() {
   document.querySelectorAll('[data-screenshot]').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
+      if (!currentResult) {
+        if (typeof showToast === 'function') showToast('Run a calculation first', 'error');
+        return;
+      }
       const which = btn.dataset.screenshot;
-      captureAndCopy(which);
+      const original = btn.textContent;
+      btn.textContent = '⏳ Capturing…';
+      btn.disabled = true;
+      try {
+        await captureAndCopy(which);
+      } finally {
+        btn.textContent = original;
+        btn.disabled = false;
+      }
     });
   });
   document.getElementById('exitScreenshot').addEventListener('click', () => {
