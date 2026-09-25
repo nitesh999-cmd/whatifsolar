@@ -1831,22 +1831,30 @@ const NETWORKS = {
   AUSNET: { state: 'VIC', label: 'AusNet', supply: 1.2824, flat: 0.3198,
     free: { name: 'Midday Power Saver', start: 11, end: 14, cap: 24,
       bands: { offpeak: 0.2478, soak: 0.1976, peak: 0.4982 }, scheme: 'VIC_MPS', supply: 1.2824 } },
-  // ---- NSW / SEQ / SA (DMO flat; Solar Sharer = DMO TOU + free window) ----
-  AUSGRID: { state: 'NSW', label: 'Ausgrid', supply: 0.9041, flat: 0.2712,
-    free: { name: 'Solar Sharer', start: 11, end: 14, cap: 24,
-      bands: { peak: 0.3734, shoulder: 0.2943, offpeak: 0.1241 }, scheme: 'SSO', supply: 0.9041 } },
-  ENDEAVOUR: { state: 'NSW', label: 'Endeavour Energy', supply: 0.9368, flat: 0.3267,
-    free: { name: 'Solar Sharer', start: 11, end: 14, cap: 24,
-      bands: { peak: 0.4445, shoulder: 0.3547, offpeak: 0.1430 }, scheme: 'SSO', supply: 0.9368 } },
-  ESSENTIAL: { state: 'NSW', label: 'Essential Energy', supply: 1.0181, flat: 0.3849,
-    free: { name: 'Solar Sharer', start: 11, end: 14, cap: 24,
-      bands: { peak: 0.5298, shoulder: 0.4238, offpeak: 0.1710 }, scheme: 'SSO', supply: 1.0181 } },
-  ENERGEX: { state: 'QLD', label: 'Energex (SEQ)', supply: 1.0129, flat: 0.2882,
-    free: { name: 'Solar Sharer', start: 11, end: 14, cap: 24,
-      bands: { peak: 0.3946, shoulder: 0.3150, offpeak: 0.1271 }, scheme: 'SSO', supply: 1.0129 } },
-  SAPN: { state: 'SA', label: 'SA Power Networks', supply: 0.9523, flat: 0.3502,
-    free: { name: 'Solar Sharer', start: 12, end: 15, cap: 24,
-      bands: { peak: 0.4807, shoulder: 0.3848, offpeak: 0.1550 }, scheme: 'SSO', supply: 0.9523 } }
+  // ---- NSW / SEQ / SA — AER DMO 2026–27 final determination, legislative instrument (GST incl.) ----
+  // Flat: s.9(1) residential flat rate tariff cap. Solar Sharer: s.9(6) SSO tariff, free window s.10,
+  // excess over 24 kWh in the free window at the reasonable use tariff cap, s.11.
+  // schedule(m, h) returns $/kWh for month m (0=Jan) and local clock hour h, outside the free window.
+  AUSGRID: { state: 'NSW', label: 'Ausgrid', supply: 1.662289, flat: 0.331372,
+    free: { name: 'Solar Sharer', start: 11, end: 14, cap: 24, scheme: 'SSO', supply: 1.764106, overRate: 0.275597,
+      // Peak 3pm–9pm in Nov–Mar and Jun–Aug; everything else off-peak
+      schedule: (m, h) => ([10, 11, 0, 1, 2, 5, 6, 7].includes(m) && h >= 15 && h < 21) ? 0.637177 : 0.275597 } },
+  ENDEAVOUR: { state: 'NSW', label: 'Endeavour Energy', supply: 1.851350, flat: 0.337273,
+    free: { name: 'Solar Sharer', start: 11, end: 14, cap: 24, scheme: 'SSO', supply: 1.851350, overRate: 0.141869,
+      // Peak 4pm–8pm working weekdays (blended 5/7 with the weekend off-peak rate); sponge 10–11am; off-peak otherwise
+      schedule: (m, h) => (h >= 16 && h < 20) ? (5 * 0.487482 + 2 * 0.375300) / 7 : (h === 10) ? 0.141869 : 0.375300 } },
+  ESSENTIAL: { state: 'NSW', label: 'Essential Energy', supply: 2.722168, flat: 0.350054,
+    free: { name: 'Solar Sharer', start: 11, end: 14, cap: 24, scheme: 'SSO', supply: 2.722168, overRate: 0.275958,
+      // Peak 7–10am and 3–10pm; off-peak 10–11am, 2–3pm, 10pm–7am
+      schedule: (m, h) => ((h >= 7 && h < 10) || (h >= 15 && h < 22)) ? 0.455698 : 0.275958 } },
+  ENERGEX: { state: 'QLD', label: 'Energex (SEQ)', supply: 1.920159, flat: 0.279744,
+    free: { name: 'Solar Sharer', start: 11, end: 14, cap: 24, scheme: 'SSO', supply: 1.778531, overRate: 0.081011,
+      // Peak 4–9pm; off-peak 2–4pm; shoulder 9pm–11am
+      schedule: (m, h) => (h >= 16 && h < 21) ? 0.489020 : (h >= 14 && h < 16) ? 0.081011 : 0.264119 } },
+  SAPN: { state: 'SA', label: 'SA Power Networks', supply: 1.800512, flat: 0.419103,
+    free: { name: 'Solar Sharer', start: 12, end: 15, cap: 24, scheme: 'SSO', supply: 1.800512, overRate: 0.196632,
+      // Peak 6–10am and 4pm–12am; off-peak 12–6am; solar sponge 10am–12pm and 3–4pm
+      schedule: (m, h) => ((h >= 6 && h < 10) || h >= 16) ? 0.588420 : (h < 6) ? 0.351708 : 0.196632 } }
 };
 
 // States without a regulated free-midday plan yet (flat only, state default rate).
@@ -2015,20 +2023,19 @@ function buildPlans(networkKey, state, opts) {
     supply, rates: new Array(24).fill(flatRate), free: null, fit
   }];
   if (net && net.free) {
-    const f = net.free, b = f.bands, rates = new Array(24);
-    for (let h = 0; h < 24; h++) {
-      if (f.scheme === 'VIC_MPS') {
-        // Off-peak 9pm–11am · Free 11am–2pm · Solar soak 2pm–4pm · Peak 4pm–9pm
-        rates[h] = (h >= 16 && h < 21) ? b.peak : (h >= 14 && h < 16) ? b.soak : (h >= f.start && h < f.end) ? 0 : b.offpeak;
-      } else {
-        // DMO TOU: Peak 3pm–9pm · Off-peak 10pm–7am · Shoulder otherwise · Free window
-        rates[h] = (h >= f.start && h < f.end) ? 0 : (h >= 15 && h < 21) ? b.peak : (h >= 22 || h < 7) ? b.offpeak : b.shoulder;
-      }
-    }
-    const overRate = f.scheme === 'VIC_MPS' ? b.soak : b.shoulder;
+    const f = net.free, b = f.bands;
+    const rateAt = (m, h) => {
+      if (h >= f.start && h < f.end) return 0;
+      // VIC Midday Power Saver: Off-peak 9pm–11am · Free 11am–2pm · Solar soak 2pm–4pm · Peak 4pm–9pm
+      if (f.scheme === 'VIC_MPS') return (h >= 16 && h < 21) ? b.peak : (h >= 14 && h < 16) ? b.soak : b.offpeak;
+      return f.schedule(m, h);                 // Solar Sharer: per-network AER schedule
+    };
+    const monthRates = [];
+    for (let m = 0; m < 12; m++) { const row = []; for (let h = 0; h < 24; h++) row.push(rateAt(m, h)); monthRates.push(row); }
+    const overRate = f.scheme === 'VIC_MPS' ? b.soak : f.overRate;
     plans.push({
       key: 'free', kind: 'free', name: f.name,
-      supply: f.supply, rates, free: { start: f.start, end: f.end, cap: f.cap, overRate }, fit
+      supply: f.supply, rates: monthRates[0], monthRates, free: { start: f.start, end: f.end, cap: f.cap, overRate }, fit
     });
   }
   return plans;
@@ -2095,7 +2102,7 @@ function simulateYear(inp) {
             freeUsed += freePart;
             mCost += (gridIn - freePart) * plan.free.overRate;
           } else {
-            mCost += gridIn * plan.rates[h];
+            mCost += gridIn * (plan.monthRates ? plan.monthRates[m][h] : plan.rates[h]);
           }
           mCredit += gridOut * plan.fit;
           mImp += gridIn; mExp += gridOut;
@@ -2198,6 +2205,29 @@ async function geocode(query) {
     }
   } catch (e) { /* fall through */ }
 
+  return null;
+}
+
+// Reverse lookup: coordinates → postcode (Nominatim, then Photon). Returns null if neither answers.
+async function reverseGeocodePostcode(lat, lon) {
+  if (lat == null || lon == null) return null;
+  try {
+    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`, { headers: { 'Accept': 'application/json' } });
+    if (res.ok) {
+      const d = await res.json();
+      if (d && d.address && d.address.postcode) return String(d.address.postcode).trim();
+    }
+  } catch (e) { /* fall through */ }
+  try {
+    const res = await fetch(`https://photon.komoot.io/reverse?lat=${lat}&lon=${lon}&limit=1`);
+    if (res.ok) {
+      const d = await res.json();
+      const f = d && d.features && d.features[0];
+      if (f && f.properties && f.properties.postcode && (!f.properties.countrycode || f.properties.countrycode.toLowerCase() === 'au')) {
+        return String(f.properties.postcode).trim();
+      }
+    }
+  } catch (e) { /* fall through */ }
   return null;
 }
 
@@ -2681,6 +2711,12 @@ async function runCalculation() {
   let postcode = normalizePostcode(geo.postcode);
   if (!postcode) postcode = normalizePostcode(extractPostcodeFromText(geo.display));
   if (!postcode) postcode = normalizePostcode(extractPostcodeFromText(document.getElementById('location').value));
+  // Suburb-level matches (e.g. "Point Cook") often carry no postcode — look it up from the coordinates
+  if (!postcode) {
+    setBusy(true); setShimmer(true);
+    try { postcode = normalizePostcode(await reverseGeocodePostcode(geo.lat, geo.lon)); }
+    finally { setShimmer(false); setBusy(false); }
+  }
   if (!postcode) {
     showError('Couldn\'t determine the postcode from that location. Try entering a 4-digit postcode directly.');
     setBusy(false);
@@ -2773,7 +2809,11 @@ function computeDeal(ctx, opts) {
   // A custom usage rate (their retailer is dearer/cheaper than the reference) scales every plan's rates alike
   if (pricingOverrides.retailRate != null && net) {
     const k = (pricingOverrides.retailRate / 100) / net.flat;
-    plans.forEach(p => { if (p.kind === 'free') { p.rates = p.rates.map(r => r * k); p.free.overRate *= k; } });
+    plans.forEach(p => {
+      if (p.kind !== 'free') return;
+      p.monthRates = p.monthRates.map(row => row.map(r => r * k));
+      p.rates = p.monthRates[0]; p.free.overRate *= k;
+    });
   }
   if (pricingOverrides.supply != null) plans.forEach(p => { p.supply = pricingOverrides.supply; });
   const flat = plans[0];
@@ -2940,7 +2980,7 @@ function renderPlans(d) {
     const isBest = multi && r === d.best;
     let desc;
     if (p.kind === 'free') {
-      const peak = Math.max(...p.rates);
+      const peak = Math.max(...(p.monthRates || [p.rates]).map(row => Math.max(...row)));
       desc = `Free ${fmtHour(p.free.start)}–${fmtHour(p.free.end)} (up to ${p.free.cap} kWh/day) · evening peak ${(peak * 100).toFixed(1)}¢`;
     } else {
       desc = `${(p.rates[0] * 100).toFixed(1)}¢/kWh all day`;

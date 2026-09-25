@@ -47,4 +47,17 @@ ok(fb.freeKwh <= 24 * 365 + 1, `free kWh within cap ${Math.round(fb.freeKwh)}`);
 // Energy balance: load + charging losses ≈ import − export + generation (within 5%)
 const bal = (6000 + 0.3 * 365) - (bat.importKwh - bat.exportKwh + g66.reduce((a, b) => a + b));
 ok(bal <= 0 && bal > -0.12 * 6000, `energy balance (losses) ${Math.round(bal)}`);
+// Tariffs reproduce the AER's published 2026–27 annual prices (instrument s.8): flat exactly, Solar Sharer within 10% (our load profile is more evening-heavy than the AER's)
+const AER = { AUSGRID: [3900, 1899, 1893], ENDEAVOUR: [4900, 2328, 2320], ESSENTIAL: [4600, 2604, 2530], ENERGEX: [4600, 1988, 1914], SAPN: [4000, 2334, 2276] };
+for (const k of Object.keys(AER)) {
+  const [kwh, flatAnnual, ssoAnnual] = AER[k], net = E.NETWORKS[k];
+  const P = E.buildPlans(k, net.state, { fit: 0.05 });
+  const lat = { NSW: -33.9, QLD: -27.5, SA: -34.9 }[net.state];
+  const f = E.simulateYear({ monthlyGenKwh: zeros, annualLoadKwh: kwh, battery: null, lat, state: net.state, plan: P[0] }).annualBill;
+  const sso = E.simulateYear({ monthlyGenKwh: zeros, annualLoadKwh: kwh, battery: null, lat, state: net.state, plan: P[1] }).annualBill;
+  ok(near(f, flatAnnual, flatAnnual * 0.003), `${k} flat ${Math.round(f)} vs AER ${flatAnnual}`);
+  ok(near(sso, ssoAnnual, ssoAnnual * 0.10), `${k} Solar Sharer ${Math.round(sso)} vs AER ${ssoAnnual}`);
+}
+// VIC reference (ESC VDO 2026–27 / Midday Power Saver schedule) — spot values
+ok(E.NETWORKS.POWERCOR.flat === 0.2822 && E.NETWORKS.POWERCOR.free.bands.peak === 0.4381 && E.NETWORKS.POWERCOR.free.bands.offpeak === 0.2462, 'Powercor reference values');
 console.log(`engine_test: ${n} checks passed`);

@@ -125,9 +125,22 @@ with sync_playwright() as p:
             page.click('#calculateBtn'); page.wait_for_selector('#confirmCard.show')
             page.click('.mode-btn[data-mode="solar"]')
             reg['confirm cancelled on mode change'] = page.evaluate("!document.getElementById('confirmCard').classList.contains('show') && pendingGeocode === null")
+            # Suburb match without a postcode (real Nominatim behaviour for "Point Cook") → reverse lookup
+            ctx.unroute('**nominatim.openstreetmap.org/**')
+            def nomi(route):
+                if '/reverse' in route.request.url:
+                    route.fulfill(status=200, content_type='application/json', body=json.dumps({"address": {"postcode": "3030"}}))
+                else:
+                    route.fulfill(status=200, content_type='application/json', body=json.dumps([{"lat": "-37.906", "lon": "144.753", "display_name": "Point Cook, Melbourne, Victoria, Australia", "address": {"suburb": "Point Cook"}}]))
+            ctx.route('**nominatim.openstreetmap.org/**', nomi)
+            r3 = run(page, 'solarBattery', '', '650', '', '', 'Point Cook VIC')
+            reg['suburb without postcode works'] = page.evaluate("currentResult && currentResult.postcode") == '3030'
+            ctx.unroute('**nominatim.openstreetmap.org/**')
+            ctx.route('**nominatim.openstreetmap.org/**', lambda r: r.fulfill(status=200, content_type='application/json', body=json.dumps(NOMINATIM)))
             print('=== review regressions:', reg)
             assert reg['retail $0.28 ->'] == '28.0¢' and reg['retail 0 ->'] == '5.0¢' and reg['no NaN'] and reg['loan 1 ->'] == '1.00%' \
-                and reg['supply 138 ->'] == '$1.38/day' and reg['low bill consistent'] and reg['confirm cancelled on mode change'], reg
+                and reg['supply 138 ->'] == '$1.38/day' and reg['low bill consistent'] and reg['confirm cancelled on mode change'] \
+                and reg['suburb without postcode works'], reg
             res = run(page, 'solarBattery', 'Sam', '700', '10', '13.5', '3030')
             # Switching to Add battery must clear the old result
             page.click('.mode-btn[data-mode="addBattery"]'); page.wait_for_timeout(200)
