@@ -2770,6 +2770,11 @@ function computeDeal(ctx, opts) {
   const flatC = pricingOverrides.retailRate != null ? pricingOverrides.retailRate
     : (net ? net.flat * 100 : proxy ? proxy.flat * 100 : STATE_RETAIL_RATE[state]);
   const plans = buildPlans(netKey, state, { fit: fitC / 100, flatRate: flatC / 100, supply: proxy ? proxy.supply : undefined });
+  // A custom usage rate (their retailer is dearer/cheaper than the reference) scales every plan's rates alike
+  if (pricingOverrides.retailRate != null && net) {
+    const k = (pricingOverrides.retailRate / 100) / net.flat;
+    plans.forEach(p => { if (p.kind === 'free') { p.rates = p.rates.map(r => r * k); p.free.overRate *= k; } });
+  }
   if (pricingOverrides.supply != null) plans.forEach(p => { p.supply = pricingOverrides.supply; });
   const flat = plans[0];
 
@@ -2797,7 +2802,9 @@ function computeDeal(ctx, opts) {
 
   // Before = today's situation on a standard flat plan
   const before = simulateYear({ monthlyGenKwh: mode === 'addBattery' ? existingGen : zeros, annualLoadKwh: load, battery: null, lat: ctx.lat, state, plan: flat });
-  const beforeAnnual = hasBill ? ctx.bill * 4 : before.annualBill;
+  // Show their bill as entered — unless usage hit a model limit, then show the modelled bill so before/after/saving agree
+  const beforeAnnual = hasBill && Math.abs(before.annualBill - ctx.bill * 4) <= Math.max(8, ctx.bill * 4 * 0.02)
+    ? ctx.bill * 4 : before.annualBill;
   const results = plans.map(p => ({ plan: p, sim: simulateYear({ monthlyGenKwh: gen, annualLoadKwh: load, battery, lat: ctx.lat, state, plan: p }) }));
   let best = results[0];
   results.forEach(r => { if (r.sim.annualBill < best.sim.annualBill) best = r; });
@@ -2920,7 +2927,7 @@ function renderPlans(d) {
   if (keys.length) {
     wrap.style.display = '';
     sel.innerHTML = keys.map(k => `<option value="${k}"${k === d.netKey ? ' selected' : ''}>${escapeHtml(NETWORKS[k].label)}</option>`).join('')
-      + (d.netKey ? '' : '<option value="" selected>Other / regional</option>');
+      + ((!d.netKey || d.state === 'QLD') ? `<option value=""${d.netKey ? '' : ' selected'}>Other / regional</option>` : '');
     document.getElementById('networkText').textContent = d.netKey ? NETWORKS[d.netKey].label : 'Regional';
   } else {
     wrap.style.display = 'none';
@@ -3000,13 +3007,22 @@ function parsePricingValue(field, raw) {
   let n = parseFloat(m[0]);
   if (isNaN(n)) return null;
   const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+  const hasPct = /%/.test(s);
   switch (field) {
-    case 'retailRate': case 'fitRate': return clamp(n, 0, 200);
-    case 'supply': return clamp(n, 0, 5);
+    case 'retailRate':                        // cents; "$0.28" or "0.28" means dollars
+      if (n > 0 && n < 1) n = n * 100;
+      return clamp(n, 5, 200);
+    case 'fitRate':
+      if (n > 0 && n < 1 && /\$/.test(s)) n = n * 100;
+      return clamp(n, 0, 100);
+    case 'supply':                            // $/day; "138" or "138c" means cents
+      if (n > 5) n = n / 100;
+      return clamp(n, 0, 5);
     case 'installCost': return clamp(n, 0, 1000000);
     case 'batteryPerKwh': return clamp(n, 100, 5000);
     case 'stcPrice': return clamp(n, 0, 100);
-    case 'loanRate': return clamp(n > 1 ? n / 100 : n, 0, 0.3);
+    case 'loanRate':                          // "9.49", "9.49%", "1" → percent; "0.0949" → fraction
+      return clamp(hasPct || n >= 1 ? n / 100 : n, 0, 0.3);
     case 'loanYears': return clamp(Math.round(n), 1, 15);
     default: return n;
   }
@@ -3020,7 +3036,10 @@ let compareInstallOverrides = [null, null, null];
 function calcForCompare(sizeKw, idx) {
   if (!lastCalcInputs) return null;
   // Same plans, battery and rate overrides as the main result; solar price is per-card.
-  const installCost = (idx != null && compareInstallOverrides[idx] != null) ? compareInstallOverrides[idx] : defaultInstallCost(sizeKw);
+  const isCurrent = currentResult && Math.abs(sizeKw - currentResult.systemKw) < 0.01;
+  const installCost = (idx != null && compareInstallOverrides[idx] != null) ? compareInstallOverrides[idx]
+    : (isCurrent && pricingOverrides.installCost != null) ? pricingOverrides.installCost
+    : defaultInstallCost(sizeKw);
   const d = computeDeal(lastCalcInputs, { sizeKw, installCost });
   return {
     annualSavings: Math.round(d.annualSaving),
@@ -3170,7 +3189,7 @@ function buildShareMessage(r) {
   const net = Math.round(d.weeklyNet);
   const lines = [
     `${greet} what ${what} looks like at ${loc}:`,
-    `• Power bill: ~${fmt$(d.beforeAnnual / 4)} → ~${fmt$(toQ)} a quarter`,
+    `• Power bill: ~${fmt$(d.beforeAnnual / 4)} → ~${fmt$(toQ)} a quarter${d.afterAnnual < 0 ? ` (plus ~${fmt$(-d.afterAnnual / 4)} credit)` : ''}`,
     `• Saves ~${fmt$(d.weeklySave)}/week — finance ~${fmt$(d.weeklyRepay)}/week${net >= 0 ? ' (cash-positive)' : ''}`
   ];
   if (d.batKwh && d.rebate.now) {
@@ -3682,9 +3701,12 @@ function setupModeSwitch() {
   setMode(saved || 'solarBattery');
   document.querySelectorAll('.mode-btn').forEach(b => {
     b.addEventListener('click', () => {
-      const prev = currentMode;
       setMode(b.dataset.mode);
-      if (!lastCalcInputs || prev === b.dataset.mode) return;
+      // A pending location confirm was captured under the old mode — make them press Calculate again
+      if (pendingGeocode) { pendingGeocode = null; document.getElementById('confirmCard').classList.remove('show'); }
+      if (!lastCalcInputs) return;
+      const prev = lastCalcInputs.mode;          // the mode the shown result was calculated in
+      if (prev === b.dataset.mode) return;
       // Solar <-> Solar + Battery: same inputs, recalc live. Add battery changes what the bill means → fresh calc.
       if (prev !== 'addBattery' && b.dataset.mode !== 'addBattery') {
         lastCalcInputs.mode = b.dataset.mode;

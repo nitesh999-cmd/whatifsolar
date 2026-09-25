@@ -104,6 +104,31 @@ with sync_playwright() as p:
             page.click('#moreDetails > summary'); page.wait_for_timeout(700)
             print('=== compare cards (solar+battery):', page.evaluate("[...document.querySelectorAll('.compare-card')].map(c=>c.innerText.replace(/\\n+/g,' '))"))
             print('=== verdict/net:', res['verdict'], '|', res['net'])
+            # Review regressions ------------------------------------------------------------
+            def edit(cell, text):
+                page.click(cell); page.keyboard.press('Control+A'); page.keyboard.type(text); page.keyboard.press('Enter'); page.wait_for_timeout(250)
+                return page.evaluate(f"document.querySelector('{cell}').textContent")
+            reg = {}
+            reg['retail $0.28 ->'] = edit('#editRetail', '0.28')
+            reg['retail 0 ->'] = edit('#editRetail', '0')
+            reg['no NaN'] = 'NaN' not in page.evaluate("document.getElementById('deal').innerText")
+            reg['loan 1 ->'] = edit('#editLoanRate', '1')
+            reg['supply 138 ->'] = edit('#editSupply', '138')
+            page.evaluate("localStorage.removeItem('whatifsolar_settings_v2')")
+            # before/after/saving agree at the low-bill clamp
+            r2 = run(page, 'solar', '', '100', '6.6', '', '3030')
+            f, t = [float(x.replace('$','').replace(',','')) for x in (r2['from'], r2['to'])]
+            reg['low bill consistent'] = abs((f - t) * 4 - float(r2['heroSave'].replace(',',''))) < 12
+            # mode change while confirm card is open cancels the pending calc
+            page.goto(f'http://127.0.0.1:{PORT}/index.html')
+            page.click('.mode-btn[data-mode="addBattery"]'); page.fill('#bill', '380'); page.fill('#size', '6.6'); page.fill('#location', '3030')
+            page.click('#calculateBtn'); page.wait_for_selector('#confirmCard.show')
+            page.click('.mode-btn[data-mode="solar"]')
+            reg['confirm cancelled on mode change'] = page.evaluate("!document.getElementById('confirmCard').classList.contains('show') && pendingGeocode === null")
+            print('=== review regressions:', reg)
+            assert reg['retail $0.28 ->'] == '28.0¢' and reg['retail 0 ->'] == '5.0¢' and reg['no NaN'] and reg['loan 1 ->'] == '1.00%' \
+                and reg['supply 138 ->'] == '$1.38/day' and reg['low bill consistent'] and reg['confirm cancelled on mode change'], reg
+            res = run(page, 'solarBattery', 'Sam', '700', '10', '13.5', '3030')
             # Switching to Add battery must clear the old result
             page.click('.mode-btn[data-mode="addBattery"]'); page.wait_for_timeout(200)
             print('=== results hidden after switch to addBattery:', page.evaluate("!document.getElementById('results').classList.contains('show')"))
