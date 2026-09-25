@@ -146,6 +146,140 @@ with sync_playwright() as p:
             page.click('.mode-btn[data-mode="addBattery"]'); page.wait_for_timeout(200)
             print('=== results hidden after switch to addBattery:', page.evaluate("!document.getElementById('results').classList.contains('show')"))
         ctx.close()
+    # ---------------- v3 features ----------------
+    ctx = b.new_context(viewport={'width': 1280, 'height': 900})
+    ctx.route('**nominatim.openstreetmap.org/**', lambda r: r.fulfill(status=200, content_type='application/json', body=json.dumps(NOMINATIM)))
+    ctx.route('**power.larc.nasa.gov/**', lambda r: r.fulfill(status=200, content_type='application/json', body=json.dumps(NASA)))
+    page = ctx.new_page()
+    page.on('pageerror', lambda e: errors.append(f'v3 pageerror: {e}'))
+    v3 = {}
+    res = run(page, 'solarBattery', 'Sarah', '650', '', '', 'Point Cook')
+    def edit(cell, text):
+        page.click(cell); page.keyboard.press('Control+A'); page.keyboard.type(text); page.keyboard.press('Enter'); page.wait_for_timeout(250)
+        return page.evaluate(f"document.querySelector('{cell}').textContent")
+    v3['agent name'] = edit('#editAgentName', 'Nitesh')
+    v3['agent phone'] = edit('#editAgentPhone', '0412 345 678')
+    # Good/Better/Best
+    v3['packages'] = page.evaluate("[...document.querySelectorAll('.pkg')].map(p=>p.innerText.replace(/\\n+/g,' '))")
+    before_meta = page.evaluate("document.getElementById('metaSize').textContent")
+    page.click('.pkg[data-pkg="2"]'); page.wait_for_timeout(400)
+    v3['after Best click'] = [before_meta, page.evaluate("document.getElementById('metaSize').textContent")]
+    page.click('.pkg[data-pkg="0"]'); page.wait_for_timeout(400)
+    # EV toggle raises the before bill
+    b0 = page.evaluate("document.getElementById('dealBillFrom').textContent")
+    page.check('#ev'); page.wait_for_timeout(400)
+    v3['EV before bill'] = [b0, page.evaluate("document.getElementById('dealBillFrom').textContent"), page.evaluate("document.getElementById('planTip').textContent.slice(-70)")]
+    page.uncheck('#ev'); page.wait_for_timeout(300)
+    # VPP credit adds a third plan
+    edit('#editVpp', '400')
+    v3['VPP plans'] = page.evaluate("[...document.querySelectorAll('.plan-row')].map(r=>r.innerText.replace(/\\n+/g,' | '))")
+    edit('#editVpp', '0')
+    # Agent numbers to compare with the customer view
+    agent = page.evaluate("({ to: document.getElementById('dealBillTo').textContent, save: document.getElementById('dealSaveWk').textContent, repay: document.getElementById('dealRepayWk').textContent, meta: document.getElementById('metaSize').textContent })")
+    link = page.evaluate("buildCustomerLink(currentResult)")
+    v3['link length'] = len(link)
+    v3['share msg has link'] = '#q=' in page.evaluate("buildShareMessage(currentResult)")
+    # screenshot framing hides agent-only + customer-only blocks
+    page.evaluate("document.body.classList.add('screenshot-top')")
+    v3['screenshot hides book+warn'] = page.evaluate("getComputedStyle(document.getElementById('bookCard')).display === 'none' && getComputedStyle(document.getElementById('dataWarn')).display === 'none'")
+    page.evaluate("document.body.classList.remove('screenshot-top')")
+    ctx.close()
+    # Customer opens the link: fresh browser, no settings, geocoding + NASA blocked (everything rides in the link)
+    for vp_name, vp in [('desktop', {'width': 1280, 'height': 900}), ('mobile', {'width': 390, 'height': 844})]:
+        cctx = b.new_context(viewport=vp, device_scale_factor=2 if vp_name == 'mobile' else 1)
+        cctx.route('**nominatim.openstreetmap.org/**', lambda r: r.abort())
+        cctx.route('**power.larc.nasa.gov/**', lambda r: r.abort())
+        cp = cctx.new_page()
+        cp.on('pageerror', lambda e: errors.append(f'customer pageerror: {e}'))
+        cp.goto(link)
+        cp.wait_for_selector('#results.show', timeout=8000); cp.wait_for_timeout(800)
+        cust = cp.evaluate("({ view: document.body.classList.contains('customer-view'), inputsHidden: getComputedStyle(document.querySelector('.input-section')).display === 'none', to: document.getElementById('dealBillTo').textContent, save: document.getElementById('dealSaveWk').textContent, repay: document.getElementById('dealRepayWk').textContent, meta: document.getElementById('metaSize').textContent, book: document.getElementById('bookBtn').href, prepared: document.getElementById('preparedBy').textContent, title: document.title, storage: localStorage.getItem('whatifsolar_settings_v2'), recents: localStorage.getItem('solarProduction_recents_v1') })")
+        if vp_name == 'desktop':
+            v3['customer view'] = cust
+            v3['customer matches agent'] = (cust['to'], cust['save'], cust['repay']) == (agent['to'], agent['save'], agent['repay'])
+        cp.screenshot(path=f'{OUT}/{vp_name}-customer-link.png', full_page=True)
+        cctx.close()
+    print('\n=== v3:', json.dumps(v3, indent=1, ensure_ascii=False))
+    assert len(v3['packages']) == 3 and v3['after Best click'][0] != v3['after Best click'][1]
+    assert v3['agent phone'] == '+61412345678' and v3['share msg has link'] and v3['screenshot hides book+warn']
+    assert v3['EV before bill'][0] != v3['EV before bill'][1] and len(v3['VPP plans']) == 3
+    assert v3['customer view']['view'] and v3['customer view']['inputsHidden'] and v3['customer matches agent']
+    assert 'wa.me/61412345678' in v3['customer view']['book'] and v3['customer view']['prepared'] == 'Prepared by Nitesh'
+    assert v3['customer view']['storage'] is None and v3['customer view']['recents'] is None
+
+    # ---------------- v3 review regressions ----------------
+    rr = {}
+    ctx = b.new_context(viewport={'width': 1280, 'height': 900})
+    ctx.route('**nominatim.openstreetmap.org/**', lambda r: r.fulfill(status=200, content_type='application/json', body=json.dumps(NOMINATIM)))
+    ctx.route('**power.larc.nasa.gov/**', lambda r: r.fulfill(status=200, content_type='application/json', body=json.dumps(NASA)))
+    page = ctx.new_page()
+    page.on('pageerror', lambda e: errors.append(f'rr pageerror: {e}'))
+    def edit2(cell, text):
+        page.click(cell); page.keyboard.press('Control+A'); page.keyboard.type(text); page.keyboard.press('Enter'); page.wait_for_timeout(250)
+    # agent name: tap in/out without typing must not save placeholder text
+    run(page, 'solarBattery', 'Sarah', '650', '', '', 'Point Cook')
+    page.click('#editAgentName'); page.click('#editRetail'); page.keyboard.press('Escape'); page.wait_for_timeout(200)
+    rr['agent name not saved'] = (page.evaluate("getSettings().agentName") == '')
+    edit2('#editAgentPhone', '0412345678')
+    # EV must not change the auto-recommended battery
+    bat0 = page.evaluate("currentResult.deal.batKwh"); page.check('#ev'); page.wait_for_timeout(300)
+    rr['EV keeps battery size'] = page.evaluate("currentResult.deal.batKwh") == bat0
+    page.uncheck('#ev'); page.wait_for_timeout(300)
+    # VPP best → share message agrees
+    edit2('#editVpp', '600')
+    rr['VPP share line'] = 'VPP battery plan' in page.evaluate("buildShareMessage(currentResult)")
+    edit2('#editVpp', '0')
+    # Package anchor keeps the agent's discounted price
+    run(page, 'solarBattery', 'Sam', '700', '9', '13.5', '3030')
+    edit2('#editInstall', '6000')
+    anchor_total = page.evaluate("currentResult.deal.total")
+    page.click('.pkg[data-pkg="2"]'); page.wait_for_timeout(300)
+    page.click('.pkg[data-pkg="0"]'); page.wait_for_timeout(300)
+    sizes = page.evaluate("[...document.querySelectorAll('.pkg-size')].map(x=>x.textContent)")
+    page.click('.pkg[data-pkg="1"]'); page.wait_for_timeout(300)
+    rr['anchor stays + price kept'] = ('9 kW + 13.5 kWh' in sizes) and page.evaluate("currentResult.deal.total") == anchor_total
+    # Add battery + EV: battery saving should barely move
+    run(page, 'addBattery', 'Mei', '380', '6.6', '', '3030')
+    w0 = page.evaluate("currentResult.deal.weeklySave"); page.check('#ev'); page.wait_for_timeout(300)
+    w1 = page.evaluate("currentResult.deal.weeklySave"); page.uncheck('#ev')
+    rr['addBattery EV saving delta $/wk'] = round(w1 - w0, 1)
+    # quote-date link opened after the rebate step-down keeps the quoted rebate + shows refresh notice
+    run(page, 'solarBattery', 'Sarah', '650', '', '13.5', '3030')
+    link = page.evaluate("buildCustomerLink(currentResult)"); agent_total = page.evaluate("currentResult.deal.total")
+    ctx.close()
+    cctx = b.new_context(viewport={'width': 1280, 'height': 900})
+    cp = cctx.new_page()
+    cp.on('pageerror', lambda e: errors.append(f'rr customer pageerror: {e}'))
+    cp.clock.install(time='2027-01-05T10:00:00+10:00')
+    cp.goto(link); cp.wait_for_selector('#results.show', timeout=8000); cp.wait_for_timeout(300)
+    rr['link after 1 Jan keeps quoted price'] = cp.evaluate("currentResult.deal.total") == agent_total
+    rr['link after 1 Jan notice'] = cp.evaluate("document.getElementById('dealUrgency').textContent")
+    rr['link shows quote date'] = cp.evaluate("document.getElementById('metaDate').textContent")
+    # XSS + garbled links: rejected with a visible message, no script runs
+    import base64
+    def mk(payload):
+        return f'http://127.0.0.1:{PORT}/index.html#q=' + base64.urlsafe_b64encode(json.dumps(payload).encode()).decode().rstrip('=')
+    base = {"v": 1, "n": "X", "m": "solarBattery", "b": 650, "s": 8, "bt": 16, "pc": "3030", "st": "VIC", "la": -37.9, "lo": 144.75, "nk": "POWERCOR", "po": {}, "se": {}, "ns": None, "dt": "2026-09-25"}
+    for name, patch in [('xss size', {"s": "<img src=x onerror=window.__xss=1>"}), ('xss name', {"n": "<img src=x onerror=window.__xss=1>"}), ('bad state', {"st": "vic"}), ('text price', {"po": {"installCost": "abc"}})]:
+        pl = dict(base); pl.update(patch)
+        cp.goto('about:blank'); cp.goto(mk(pl)); cp.wait_for_timeout(700)
+        rr[name] = cp.evaluate("({ xss: !!window.__xss, linkError: document.getElementById('linkError').style.display !== 'none' ? document.getElementById('linkError').textContent : '', results: document.getElementById('results').classList.contains('show'), nan: document.body.innerText.includes('NaN') })")
+    cctx.close()
+    # WA: tapping in/out of the feed-in cell keeps the buyback
+    ctx = b.new_context(viewport={'width': 1280, 'height': 900})
+    ctx.route('**nominatim.openstreetmap.org/**', lambda r: r.abort()); ctx.route('**photon.komoot.io/**', lambda r: r.abort()); ctx.route('**power.larc.nasa.gov/**', lambda r: r.abort())
+    page = ctx.new_page()
+    run(page, 'solarBattery', '', '650', '', '', '6000')
+    t0 = page.evaluate("document.getElementById('dealBillTo').textContent")
+    page.click('#editFit'); page.click('#editRetail'); page.keyboard.press('Escape'); page.wait_for_timeout(300)
+    rr['WA FiT untouched'] = (page.evaluate("document.getElementById('dealBillTo').textContent") == t0) and ('buyback' in page.evaluate("document.getElementById('planFoot').textContent"))
+    ctx.close()
+    print('\n=== v3 review regressions:', json.dumps(rr, indent=1, ensure_ascii=False))
+    assert rr['agent name not saved'] and rr['EV keeps battery size'] and rr['VPP share line'] and rr['anchor stays + price kept']
+    assert abs(rr['addBattery EV saving delta $/wk']) <= 3 and rr['link after 1 Jan keeps quoted price'] and 'stepped down' in rr['link after 1 Jan notice']
+    assert all((not rr[k]['xss']) and rr[k]['linkError'] and not rr[k]['nan'] for k in ['xss size', 'bad state']) and not rr['xss name']['xss']
+    assert not rr['text price']['nan'] and rr['WA FiT untouched']
+
     # Offline: geocoders + NASA down → bare postcode still works, other states
     ctx = b.new_context(viewport={'width': 1280, 'height': 900})
     ctx.route('**nominatim.openstreetmap.org/**', lambda r: r.abort())
@@ -155,6 +289,9 @@ with sync_playwright() as p:
     page.on('pageerror', lambda e: errors.append(f'offline pageerror: {e}'))
     for pc, bill in [('2150', '700'), ('4870', '600'), ('6000', '650'), ('5000', '800')]:
         res = run(page, 'solarBattery', '', bill, '', '', pc)
+        if pc == '6000':
+            warn = page.evaluate("document.getElementById('dataWarn').textContent")
+            print('=== WA warning:', warn); assert 'WA prices' in warn
         print(f'=== offline {pc}:', res['meta'], '|', res['from'], '->', res['to'], '|', res['save'], '/', res['repay'], '|', res['plans'], '|', res['tip'][:80])
     page.locator('.top-section').screenshot(path=f'{OUT}/offline-SA-top.png')
     ctx.close()

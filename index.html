@@ -1182,6 +1182,47 @@
   body.screenshot-top details.more-details { display: none !important; }
 
   .pricing-cell.is-hidden { display: none; }
+
+  /* v3 — agent-only warnings, EV, packages, customer link */
+  .data-warn {
+    background: #FEF3C7; border: 1px solid #FCD34D; color: #92400E; border-radius: 10px;
+    padding: 10px 14px; margin-bottom: 14px; font-size: 13px; line-height: 1.5;
+  }
+  .field .check { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text); cursor: pointer; margin: 0; }
+  .field .check input { width: 18px; height: 18px; accent-color: var(--accent); }
+  .packages { border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px; margin: 0 0 16px; background: #fff; }
+  .pkg-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 8px; }
+  @media (max-width: 640px) { .pkg-grid { grid-template-columns: 1fr; } }
+  .pkg {
+    border: 1px solid var(--border); border-radius: 12px; padding: 12px; cursor: pointer; background: var(--card);
+    text-align: left; font-family: inherit; color: var(--text); transition: border-color .15s ease, box-shadow .15s ease;
+  }
+  .pkg:hover { border-color: var(--accent-light); }
+  .pkg.current { border-color: var(--success); box-shadow: 0 0 0 1px var(--success); background: #fff; }
+  .pkg-tier { font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+  .pkg.current .pkg-tier { color: var(--success); }
+  .pkg-size { font-size: 15px; font-weight: 700; margin: 4px 0 8px; }
+  .pkg-row { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); padding: 2px 0; }
+  .pkg-row b { color: var(--text); font-weight: 700; }
+  .pkg-row.hl b { color: var(--success); font-size: 14px; }
+  .book { text-align: center; border: 2px solid var(--success); border-radius: 14px; padding: 18px; margin: 0 0 16px; background: rgba(5,150,105,0.05); }
+  .book-title { font-size: 16px; font-weight: 700; margin-bottom: 10px; }
+  .btn-book { display: inline-block; background: var(--success); color: #fff; text-decoration: none; font-size: 17px; padding: 14px 22px; border-radius: 12px; }
+  .btn-book:hover { background: #047857; }
+  .book-call { display: block; margin-top: 10px; font-size: 13px; color: var(--text-muted); }
+  .customer-only { display: none; }
+  body.customer-view .customer-only { display: block; }
+  body.customer-view .input-section,
+  body.customer-view .recents-panel,
+  body.customer-view .pricing-panel,
+  body.customer-view .agent-only,
+  body.customer-view .screenshot-actions,
+  body.customer-view .plans-net select { display: none !important; }
+  body.customer-view .plans-net .net-text { display: inline; }
+  body.screenshot-top .agent-only,
+  body.screenshot-top .customer-only { display: none !important; }
+  .prepared-by { font-size: 12px; color: var(--text-muted); }
+  #editAgentName:empty::before, #editAgentPhone:empty::before { content: 'tap to add'; color: var(--text-muted); font-weight: 400; }
   .pricing-group-label {
     grid-column: 1 / -1; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em;
     color: var(--text-muted); font-weight: 700; margin-top: 6px; padding-top: 8px; border-top: 1px dashed var(--border);
@@ -1202,6 +1243,8 @@
     <h1>Solar Savings Calculator</h1>
     <span class="attribution">A <a href="https://gridbeater.com.au/" target="_blank" rel="noopener" class="gb-link">GridBeater</a> tool</span>
   </header>
+
+  <div class="error-banner show" id="linkError" role="alert" style="display:none"></div>
 
   <!-- Recents panel -->
   <details class="recents-panel" id="recentsPanel">
@@ -1237,6 +1280,9 @@
         <label for="battery">Battery (usable kWh)</label>
         <input type="number" id="battery" placeholder="auto" step="0.5" min="1" max="100" inputmode="decimal" />
         <div class="hint">Leave blank to recommend.</div>
+      </div>
+      <div class="field span-2 ev-row">
+        <label class="check"><input type="checkbox" id="ev" /> Adding an EV <span class="optional">(~2,000 kWh/yr of charging — not on today's bill)</span></label>
       </div>
       <div class="field span-2">
         <label for="location">Location (postcode, suburb, or address)</label>
@@ -1278,11 +1324,13 @@
 
     <!-- TOP SECTION -->
     <section class="top-section section-card">
+      <div class="data-warn agent-only" id="dataWarn" style="display:none"></div>
       <div class="name-banner" id="nameBannerTop"></div>
       <div class="meta-strip">
         <span><strong id="metaSize">—</strong> system</span>
         <span><strong id="metaLocation">—</strong></span>
         <span>Calculated <strong id="metaDate">—</strong></span>
+        <span class="prepared-by customer-only" id="preparedBy"></span>
       </div>
 
       <div class="hero">
@@ -1341,6 +1389,12 @@
         </div>
       </div>
 
+      <div class="book customer-only" id="bookCard">
+        <div class="book-title">Like what you see?</div>
+        <a class="btn btn-book" id="bookBtn" href="#" target="_blank" rel="noopener">📅 Book my free roof check</a>
+        <a class="book-call" id="callBtn" href="#">or call <span id="agentNameText"></span></a>
+      </div>
+
       <div class="plans" id="plans">
         <div class="plans-head">
           <h3>Best energy plan for this system</h3>
@@ -1349,6 +1403,11 @@
         <div id="planRows"></div>
         <div class="plan-tip" id="planTip"></div>
         <div class="plan-foot" id="planFoot"></div>
+      </div>
+
+      <div class="packages" id="packages">
+        <div class="plans-head"><h3>Three ways to do it</h3><span class="plans-net">tap one to see its numbers</span></div>
+        <div class="pkg-grid" id="pkgGrid"></div>
       </div>
 
       <div class="season-context" id="seasonContext">
@@ -1444,6 +1503,19 @@
             <span class="label">Loan term</span>
             <span class="editable" id="editLoanYears" contenteditable="true" inputmode="decimal" data-field="loanYears">—</span>
           </div>
+          <div class="pricing-cell" id="cellVpp">
+            <span class="label">VPP credit $/yr (this customer)</span>
+            <span class="editable" id="editVpp" contenteditable="true" inputmode="decimal" data-field="vppCredit">—</span>
+          </div>
+          <div class="pricing-group-label">Customer link <span style="text-transform:none; letter-spacing:0; font-weight:400;">(shown on the link you send — remembered)</span></div>
+          <div class="pricing-cell">
+            <span class="label">Your name</span>
+            <span class="editable" id="editAgentName" contenteditable="true" data-field="agentName">—</span>
+          </div>
+          <div class="pricing-cell">
+            <span class="label">Your mobile (Book button)</span>
+            <span class="editable" id="editAgentPhone" contenteditable="true" inputmode="tel" data-field="agentPhone">—</span>
+          </div>
         </div>
       </div>
 
@@ -1453,6 +1525,7 @@
 
       <div class="screenshot-actions">
         <button class="btn btn-secondary" data-screenshot="top">📸 Copy as image</button>
+        <button class="btn btn-share" id="shareLink" type="button">🔗 Copy customer link</button>
         <button class="btn btn-share" id="shareWhatsapp" type="button">📱 WhatsApp</button>
         <button class="btn btn-share" id="shareCopy" type="button">📋 Copy message</button>
       </div>
@@ -1858,7 +1931,33 @@ const NETWORKS = {
 };
 
 // States without a regulated free-midday plan yet (flat only, state default rate).
-const OTHER_STATE_SUPPLY = { WA: 1.16, TAS: 1.30, NT: 0.78, ACT: 1.00, QLD: 1.25 };
+// Flat-rate reference where there is no DMO/VDO network (GST incl.). verified:false → the agent is warned to check their bill.
+const OTHER_STATE_TARIFFS = {
+  TAS: { flat: 0.279538, supply: 1.676815, source: 'OTTER 2026–27 regulated Tariff 31', verified: true },
+  QLD: { flat: 0.28895, supply: 1.80508, source: 'Ergon Tariff 11, QCA 2026–27 (regional QLD)', verified: true },
+  NT:  { flat: 0.316788, supply: 0.6245, source: 'Jacana Energy regulated 2026–27', verified: true },
+  WA:  { flat: 0.323719, supply: 1.1605, source: 'Synergy Home Plan A1 2025–26 — 2026–27 not confirmed', verified: false },
+  ACT: { flat: 0.370, supply: 1.342, source: 'ActewAGL 2026–27 from a secondary source — not confirmed', verified: false }
+};
+// Default feed-in tariffs (c/kWh). Regulated where one exists; otherwise indicative and editable.
+const FIT_DEFAULTS = {
+  VIC: 5.0,    // no regulated minimum since 1 Jul 2025 (ESC) — retailer-set
+  NSW: 5.0,    // IPART 2026–27 benchmark 3.4–6.5c
+  QLD: 6.5,    // SEQ: voluntary retailer FiTs (regional QLD handled separately)
+  SA: 8.0,     // no regulated minimum (ESCOSA) — retailer-set
+  WA: 2.0,     // DEBS: 2c most hours, 10c 3–9pm (see WA_DEBS)
+  TAS: 9.276,  // OTTER 2026–27 regulated minimum
+  NT: 9.33,    // Jacana 2026–27 anytime FiT
+  ACT: 5.5     // retailer-set
+};
+const QLD_REGIONAL_FIT = 6.153;   // QCA 2026–27 (draft determination figure)
+// WA Distributed Energy Buyback Scheme: 10c/kWh exported 3pm–9pm, 2c/kWh otherwise
+const WA_DEBS = Array.from({ length: 24 }, (_, h) => (h >= 15 && h < 21) ? 0.10 : 0.02);
+// Reference-price coverage — past these dates the tool warns the agent to update the data
+const PRICE_DATA_VALID_UNTIL = '2027-06-30';   // DMO/VDO 2026–27; Midday Power Saver schedule ends 30 Jun 2027
+const REBATE_DATA_VALID_UNTIL = '2027-12-31';  // STC factors loaded to Jul–Dec 2027
+// EV: ~12,000 km/yr × ~0.17 kWh/km
+const EV_KWH_YEAR = 2000;
 
 const NETWORKS_BY_STATE = {
   VIC: ['POWERCOR', 'CITIPOWER', 'JEMENA', 'UNITED', 'AUSNET'],
@@ -2016,11 +2115,13 @@ function buildPlans(networkKey, state, opts) {
   const fit = opts.fit;                       // $/kWh
   const net = networkKey ? NETWORKS[networkKey] : null;
   const flatRate = opts.flatRate != null ? opts.flatRate : (net ? net.flat : null);
-  const supply = opts.supply != null ? opts.supply : (net ? net.supply : (OTHER_STATE_SUPPLY[state] || 1.1));
+  const other = OTHER_STATE_TARIFFS[state];
+  const supply = opts.supply != null ? opts.supply : (net ? net.supply : (other ? other.supply : 1.1));
+  const fitByHour = opts.fitByHour || null;
   const plans = [{
     key: 'flat', kind: 'flat',
     name: net ? (state === 'VIC' ? 'Flat rate (Victorian Default Offer)' : 'Flat rate (Default Market Offer)') : 'Flat rate',
-    supply, rates: new Array(24).fill(flatRate), free: null, fit
+    supply, rates: new Array(24).fill(flatRate), free: null, fit, fitByHour
   }];
   if (net && net.free) {
     const f = net.free, b = f.bands;
@@ -2035,7 +2136,7 @@ function buildPlans(networkKey, state, opts) {
     const overRate = f.scheme === 'VIC_MPS' ? b.soak : f.overRate;
     plans.push({
       key: 'free', kind: 'free', name: f.name,
-      supply: f.supply, rates: monthRates[0], monthRates, free: { start: f.start, end: f.end, cap: f.cap, overRate }, fit
+      supply: f.supply, rates: monthRates[0], monthRates, free: { start: f.start, end: f.end, cap: f.cap, overRate }, fit, fitByHour
     });
   }
   return plans;
@@ -2052,6 +2153,9 @@ function simulateYear(inp) {
   const pmax = bat ? (bat.powerKw || 5) : 0;
   const eta = bat ? Math.sqrt(bat.rte || 0.9) : 1;
   const baseDailyLoad = inp.annualLoadKwh / 365;
+  // Extra flexible load (e.g. EV charging): kWh/day spread evenly over the given hours
+  const extra = inp.extra && inp.extra.kwhYear > 0 && inp.extra.hours && inp.extra.hours.length ? inp.extra : null;
+  const extraPerHour = extra ? inp.extra.kwhYear / 365 / extra.hours.length : 0;
   const season = loadSeason(inp.state);
   const gridCharge = inp.gridChargeInFreeWindow !== false;
 
@@ -2072,7 +2176,8 @@ function simulateYear(inp) {
         let freeUsed = 0;
         for (let h = 0; h < 24; h++) {
           const gen = shape ? dailyGen * shape[h] : 0;
-          const load = dailyLoad * LOAD_WEATHER[d] * LOAD_SHAPE[h] + (bat ? BATTERY_STANDBY_KWH_DAY / 24 : 0);
+          const load = dailyLoad * LOAD_WEATHER[d] * LOAD_SHAPE[h] + (bat ? BATTERY_STANDBY_KWH_DAY / 24 : 0)
+            + (extra && extra.hours.includes(h) ? extraPerHour : 0);
           const inFree = !!(plan.free && h >= plan.free.start && h < plan.free.end);
           const net = gen - load;
           let gridIn = 0, gridOut = 0, solarChg = 0;
@@ -2104,7 +2209,7 @@ function simulateYear(inp) {
           } else {
             mCost += gridIn * (plan.monthRates ? plan.monthRates[m][h] : plan.rates[h]);
           }
-          mCredit += gridOut * plan.fit;
+          mCredit += gridOut * (plan.fitByHour ? plan.fitByHour[h] : plan.fit);
           mImp += gridIn; mExp += gridOut;
         }
         mFree += freeUsed;
@@ -2400,12 +2505,15 @@ function animateNumber(el, from, to, duration = 800) {
 function renderResults(r) {
   currentResult = r;
 
-  const today = new Date().toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' });
   const d = r.deal;
+  const today = (lastCalcInputs && lastCalcInputs.quoteDate ? new Date(lastCalcInputs.quoteDate + 'T00:00:00') : new Date())
+    .toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' });
   const recTag = (on) => on ? ' (recommended)' : '';
-  const sizeStr = d.mode === 'solar' ? `${r.systemKw} kW${recTag(d.solarAuto)}`
-    : d.mode === 'addBattery' ? `${d.batKwh} kWh battery${recTag(d.batAuto)} + existing ${r.systemKw} kW solar`
-    : `${r.systemKw} kW${recTag(d.solarAuto)} + ${d.batKwh} kWh battery${recTag(d.batAuto)}`;
+  const recS = d.solarAuto || !!(lastCalcInputs && lastCalcInputs.recS);
+  const recB = d.batAuto || !!(lastCalcInputs && lastCalcInputs.recB);
+  const sizeStr = d.mode === 'solar' ? `${r.systemKw} kW${recTag(recS)}`
+    : d.mode === 'addBattery' ? `${d.batKwh} kWh battery${recTag(recB)} + existing ${r.systemKw} kW solar`
+    : `${r.systemKw} kW${recTag(recS)} + ${d.batKwh} kWh battery${recTag(recB)}`;
   const stateLabel = STATE_NAMES[r.state] || r.state;
 
   // Meta strips (both top and bottom)
@@ -2484,9 +2592,11 @@ function renderResults(r) {
     diff > 0 ? `+${diff}% larger` : `${diff}% smaller`;
   document.getElementById('vsAvg').textContent = vsAvgText;
 
-  // v2: money story + plan
+  // v2: money story + plan; v3: three options + booking
   renderDeal(d);
   renderPlans(d);
+  renderPackages(d);
+  renderBooking(d);
 
   // Pricing assumptions panel
   renderPricingPanel(r);
@@ -2660,6 +2770,7 @@ async function handleCalculate() {
     return;
   }
   const batteryKwh = batRaw ? parseFloat(batRaw) : null;
+  const ev = document.getElementById('ev').checked;
   if (batRaw && (isNaN(batteryKwh) || batteryKwh <= 0 || batteryKwh > 100)) {
     showError('Battery size should be the usable capacity in kWh (e.g. 13.5).');
     return;
@@ -2695,7 +2806,7 @@ async function handleCalculate() {
   }
 
   // Show confirm step
-  pendingGeocode = { sizeKw, geo, mode, bill, batteryKwh };
+  pendingGeocode = { sizeKw, geo, mode, bill, batteryKwh, ev };
   const confirmCard = document.getElementById('confirmCard');
   document.getElementById('confirmMatched').textContent = geo.display;
   confirmCard.classList.add('show');
@@ -2704,7 +2815,7 @@ async function handleCalculate() {
 
 async function runCalculation() {
   if (busy || !pendingGeocode) return;
-  const { sizeKw, geo, mode, bill, batteryKwh } = pendingGeocode;
+  const { sizeKw, geo, mode, bill, batteryKwh, ev } = pendingGeocode;
   document.getElementById('confirmCard').classList.remove('show');
 
   // Determine postcode: prefer structured field from geocoder, fall back to text extraction
@@ -2736,7 +2847,7 @@ async function runCalculation() {
     const state = postcodeToState(postcode) || 'NSW';
     lastCalcInputs = {
       sizeKw, postcode, state, lat: geo.lat, lon: geo.lon, nasaData, locationDisplay: geo.display,
-      mode, bill, batteryKwh, networkKey: postcodeToNetwork(postcode)
+      mode, bill, batteryKwh, ev, networkKey: postcodeToNetwork(postcode)
     };
     pricingOverrides = {}; // reset per-customer overrides on a new calc
     compareSizes = [6.6, 10, 13.2];
@@ -2765,9 +2876,14 @@ const SETTINGS_DEFAULTS = {
   loanRate: 0.0949,        // green-loan headline rate (Brighte Green Loan "from", 2026)
   loanYears: 7,
   loanWeeklyFee: 2.70,     // account-keeping fee per week
-  loanEstab: 199           // establishment fee, added to the loan
+  loanEstab: 199,          // establishment fee, added to the loan
+  agentName: '',           // shown on the customer link ("Prepared by …")
+  agentPhone: ''           // international format digits, e.g. 61412345678 — the customer's Book button
 };
+let SETTINGS_OVERRIDE = null;   // customer view: settings come from the link, never the viewer's device
+let customerMode = false;
 function getSettings() {
+  if (SETTINGS_OVERRIDE) return Object.assign({}, SETTINGS_DEFAULTS, SETTINGS_OVERRIDE);
   let saved = {};
   try { saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}') || {}; } catch (e) { saved = {}; }
   return Object.assign({}, SETTINGS_DEFAULTS, saved);
@@ -2800,12 +2916,14 @@ function computeDeal(ctx, opts) {
   const state = ctx.state;
   const netKey = ctx.networkKey && NETWORKS[ctx.networkKey] && NETWORKS[ctx.networkKey].state === state ? ctx.networkKey : null;
   const net = netKey ? NETWORKS[netKey] : null;
-  const fitC = pricingOverrides.fitRate != null ? pricingOverrides.fitRate : STATE_FIT_MID[state];
-  // Regional QLD (Ergon): uniform tariff policy keeps prices in line with SEQ — use Energex flat rates as proxy
-  const proxy = !net && state === 'QLD' ? NETWORKS.ENERGEX : null;
+  const other = !net ? OTHER_STATE_TARIFFS[state] : null;   // regional QLD, TAS, NT, WA, ACT
+  const fitDefault = (!net && state === 'QLD') ? QLD_REGIONAL_FIT : FIT_DEFAULTS[state];
+  const fitC = pricingOverrides.fitRate != null ? pricingOverrides.fitRate : fitDefault;
+  // WA pays by time of export (DEBS) unless the agent types a flat FiT
+  const fitByHour = (state === 'WA' && pricingOverrides.fitRate == null) ? WA_DEBS : null;
   const flatC = pricingOverrides.retailRate != null ? pricingOverrides.retailRate
-    : (net ? net.flat * 100 : proxy ? proxy.flat * 100 : STATE_RETAIL_RATE[state]);
-  const plans = buildPlans(netKey, state, { fit: fitC / 100, flatRate: flatC / 100, supply: proxy ? proxy.supply : undefined });
+    : (net ? net.flat * 100 : other ? other.flat * 100 : STATE_RETAIL_RATE[state]);
+  const plans = buildPlans(netKey, state, { fit: fitC / 100, flatRate: flatC / 100, fitByHour });
   // A custom usage rate (their retailer is dearer/cheaper than the reference) scales every plan's rates alike
   if (pricingOverrides.retailRate != null && net) {
     const k = (pricingOverrides.retailRate / 100) / net.flat;
@@ -2830,22 +2948,47 @@ function computeDeal(ctx, opts) {
   const load = hasBill
     ? consumptionFromBill(ctx.bill, flat, mode === 'addBattery' ? existingGen : null, ctx.lat, state)
     : STATE_CONSUMPTION[state];
+  // Adding an EV: not on today's bill, so it's added to both before and after
+  const evKwh = ctx.ev ? EV_KWH_YEAR : 0;
+  const OVERNIGHT = [22, 23, 0, 1, 2, 3, 4, 5];
+  const MIDDAY = [10, 11, 12, 13, 14];
+  const evFor = (plan, hasSolar) => evKwh ? {
+    kwhYear: evKwh,
+    hours: plan && plan.free ? Array.from({ length: plan.free.end - plan.free.start }, (_, i) => plan.free.start + i)
+      : hasSolar ? MIDDAY : OVERNIGHT
+  } : null;
+  const sizingLoad = load + evKwh;   // solar is sized for the EV too; the battery is not (EV charges from sun / free window)
 
   // System sizes (recommend when left blank)
   const sizeIn = opts.sizeKw != null ? opts.sizeKw : ctx.sizeKw;
-  const solarKw = mode === 'addBattery' ? existingKw : (sizeIn || recommendSolarKw(load, yieldPerKw, mode === 'solarBattery'));
+  const solarKw = mode === 'addBattery' ? existingKw : (sizeIn || recommendSolarKw(sizingLoad, yieldPerKw, mode === 'solarBattery'));
   const solarAuto = mode !== 'addBattery' && !sizeIn;
-  const batKwh = mode === 'solar' ? 0 : (ctx.batteryKwh || recommendBatteryKwh(load));
-  const batAuto = mode !== 'solar' && !ctx.batteryKwh;
+  const batIn = opts.batteryKwh != null ? opts.batteryKwh : ctx.batteryKwh;
+  const batKwh = mode === 'solar' ? 0 : (batIn || recommendBatteryKwh(load));
+  const batAuto = mode !== 'solar' && !batIn;
   const gen = perKw.map(v => v * solarKw);
   const battery = batKwh > 0 ? { kwh: batKwh, powerKw: Math.min(10, Math.max(5, batKwh * 0.4)), rte: 0.9 } : null;
 
   // Before = today's situation on a standard flat plan
-  const before = simulateYear({ monthlyGenKwh: mode === 'addBattery' ? existingGen : zeros, annualLoadKwh: load, battery: null, lat: ctx.lat, state, plan: flat });
-  // Show their bill as entered — unless usage hit a model limit, then show the modelled bill so before/after/saving agree
-  const beforeAnnual = hasBill && Math.abs(before.annualBill - ctx.bill * 4) <= Math.max(8, ctx.bill * 4 * 0.02)
-    ? ctx.bill * 4 : before.annualBill;
-  const results = plans.map(p => ({ plan: p, sim: simulateYear({ monthlyGenKwh: gen, annualLoadKwh: load, battery, lat: ctx.lat, state, plan: p }) }));
+  const beforeGen = mode === 'addBattery' ? existingGen : zeros;
+  const beforeNoEv = simulateYear({ monthlyGenKwh: beforeGen, annualLoadKwh: load, battery: null, lat: ctx.lat, state, plan: flat });
+  const before = evKwh
+    ? simulateYear({ monthlyGenKwh: beforeGen, annualLoadKwh: load, battery: null, lat: ctx.lat, state, plan: flat, extra: evFor(null, existingKw > 0) })
+    : beforeNoEv;
+  // Show their bill as entered (+ EV charging cost if adding one) — unless usage hit a model limit,
+  // then show the modelled bill so before/after/saving agree
+  const billMatches = hasBill && Math.abs(beforeNoEv.annualBill - ctx.bill * 4) <= Math.max(8, ctx.bill * 4 * 0.02);
+  const beforeAnnual = billMatches ? ctx.bill * 4 + (before.annualBill - beforeNoEv.annualBill) : before.annualBill;
+  const results = plans.map(p => ({ plan: p, sim: simulateYear({ monthlyGenKwh: gen, annualLoadKwh: load, battery, lat: ctx.lat, state, plan: p, extra: evFor(p, solarKw > 0) }) }));
+  // Optional VPP: a flat plan plus the retailer's annual battery credit (agent-entered)
+  const vpp = pricingOverrides.vppCredit || 0;
+  if (battery && vpp > 0) {
+    const f0 = results[0];
+    results.push({
+      plan: Object.assign({}, f0.plan, { key: 'vpp', kind: 'vpp', name: 'VPP battery plan', vppCredit: vpp }),
+      sim: Object.assign({}, f0.sim, { annualBill: f0.sim.annualBill - vpp })
+    });
+  }
   let best = results[0];
   results.forEach(r => { if (r.sim.annualBill < best.sim.annualBill) best = r; });
   const annualSaving = Math.max(0, before.annualBill - best.sim.annualBill);
@@ -2853,7 +2996,8 @@ function computeDeal(ctx, opts) {
   // Price
   const installOverride = opts.installCost != null ? opts.installCost : pricingOverrides.installCost;
   const solarCost = mode === 'addBattery' ? 0 : (installOverride != null ? installOverride : defaultInstallCost(solarKw));
-  const rebate = batKwh ? batteryRebate(batKwh, s.stcPrice, todayIso()) : { now: 0, next: null };
+  const quoteDate = ctx.quoteDate || todayIso();   // customer links keep the rebate that applied on the quote date
+  const rebate = batKwh ? batteryRebate(batKwh, s.stcPrice, quoteDate) : { now: 0, next: null };
   const batGross = batKwh * s.batteryPerKwh;
   const batNet = Math.max(0, batGross - rebate.now);
   const total = solarCost + batNet;
@@ -2867,11 +3011,12 @@ function computeDeal(ctx, opts) {
     mode, state, netKey, plans, results, best, flat,
     hasBill, load, solarKw, solarAuto, batKwh, batAuto, genAnnual: solarKw * yieldPerKw,
     beforeAnnual, afterAnnual: best.sim.annualBill, annualSaving,
-    selfSufficiency: Math.max(0, Math.min(1, 1 - flatSim.importKwh / load)),
+    selfSufficiency: Math.max(0, Math.min(1, 1 - flatSim.importKwh / (load + evKwh))),
     solarCost, batGross, batNet, rebate, total,
     weeklySave, weeklyRepay, weeklyNet: weeklySave - weeklyRepay,
     paybackYears: annualSaving > 0 ? total / annualSaving : null,
-    flatRateC: flatC, fitC, supply: flat.supply, settings: s
+    flatRateC: flatC, fitC, fitByHour, supply: flat.supply, settings: s, evKwh, vpp,
+    tariffSource: other ? other.source : null, tariffVerified: other ? other.verified : true
   };
 }
 
@@ -2919,8 +3064,8 @@ function renderDeal(d) {
   document.getElementById('dealBillTo').textContent = toQ < 0 ? '$0' : fmt$(toQ);
   const planName = d.best.plan.name;
   let sub = d.best.plan.kind === 'flat'
-    ? `${sizesLabel(d)} · on a <strong>flat-rate</strong> plan`
-    : `${sizesLabel(d)} · on the <strong>${escapeHtml(planName)}</strong> plan`;
+    ? `${escapeHtml(sizesLabel(d))} · on a <strong>flat-rate</strong> plan`
+    : `${escapeHtml(sizesLabel(d))} · on the <strong>${escapeHtml(planName)}</strong> plan`;
   if (toQ < 0) sub += ` · ~${fmt$(-toQ)}/qtr in credit`;
   document.getElementById('dealBillSub').innerHTML = sub;
 
@@ -2955,7 +3100,8 @@ function renderDeal(d) {
   urg.textContent = '';
   if (d.batKwh && d.rebate.next && d.rebate.next.drop > 0) {
     const daysLeft = Math.round((new Date(d.rebate.next.date) - new Date(todayIso())) / 86400000);
-    if (daysLeft <= 200) urg.textContent = `⏳ Rebate drops ${fmt$(d.rebate.next.drop)} on ${fmtDateLong(d.rebate.next.date)}`;
+    if (daysLeft <= 0) urg.textContent = `⚠️ The battery rebate stepped down on ${fmtDateLong(d.rebate.next.date)} — ask for a refreshed quote`;
+    else if (daysLeft <= 200) urg.textContent = `⏳ Rebate drops ${fmt$(d.rebate.next.drop)} on ${fmtDateLong(d.rebate.next.date)}`;
   }
 }
 
@@ -2982,6 +3128,8 @@ function renderPlans(d) {
     if (p.kind === 'free') {
       const peak = Math.max(...(p.monthRates || [p.rates]).map(row => Math.max(...row)));
       desc = `Free ${fmtHour(p.free.start)}–${fmtHour(p.free.end)} (up to ${p.free.cap} kWh/day) · evening peak ${(peak * 100).toFixed(1)}¢`;
+    } else if (p.kind === 'vpp') {
+      desc = `Flat rate + ${fmt$(p.vppCredit)}/yr VPP credit`;
     } else {
       desc = `${(p.rates[0] * 100).toFixed(1)}¢/kWh all day`;
     }
@@ -2994,25 +3142,48 @@ function renderPlans(d) {
   }).join('');
 
   const tipEl = document.getElementById('planTip');
-  if (multi) {
-    const other = d.results.find(r => r !== d.best);
-    const diff = Math.round(other.sim.annualBill - d.best.sim.annualBill);
-    const fp = d.results.find(r => r.plan.kind === 'free').plan;
-    const win = `${fmtHour(fp.free.start)}–${fmtHour(fp.free.end)}`;
-    if (d.best.plan.kind === 'free' && d.batKwh) {
-      tipEl.innerHTML = `<strong>Switch to ${escapeHtml(fp.name)}</strong> — the battery tops up on free power ${win} on cloudy days, then runs the house through the evening peak. About ${fmt$(diff)}/yr better than a flat plan.`;
-    } else if (d.best.plan.kind === 'free') {
-      tipEl.innerHTML = `<strong>Switch to ${escapeHtml(fp.name)}</strong> — run the washer, dishwasher and hot water ${win} for free. About ${fmt$(diff)}/yr better than a flat plan.`;
-    } else {
-      tipEl.innerHTML = `<strong>Stay on a flat-rate plan</strong> — for this setup, ${escapeHtml(fp.name)}'s higher evening rates cost more than the free hours save (by about ${fmt$(diff)}/yr).`;
-    }
+  const freeR = d.results.find(r => r.plan.kind === 'free');
+  const flatR = d.results[0];
+  const bk = d.best.plan.kind;
+  if (bk === 'vpp') {
+    tipEl.innerHTML = `<strong>Join a VPP battery plan</strong> — the retailer pays about ${fmt$(d.best.plan.vppCredit)}/yr to draw on the battery at peak times. Check how often they can use it and any lock-in.`;
+  } else if (bk === 'free') {
+    const win = `${fmtHour(freeR.plan.free.start)}–${fmtHour(freeR.plan.free.end)}`;
+    const diff = Math.round(flatR.sim.annualBill - freeR.sim.annualBill);
+    tipEl.innerHTML = d.batKwh
+      ? `<strong>Switch to ${escapeHtml(freeR.plan.name)}</strong> — the battery tops up on free power ${win} on cloudy days, then runs the house through the evening peak. About ${fmt$(diff)}/yr better than a flat plan.`
+      : `<strong>Switch to ${escapeHtml(freeR.plan.name)}</strong> — run the washer, dishwasher and hot water ${win} for free. About ${fmt$(diff)}/yr better than a flat plan.`;
+  } else if (freeR) {
+    const diff = Math.round(freeR.sim.annualBill - flatR.sim.annualBill);
+    tipEl.innerHTML = `<strong>Stay on a flat-rate plan</strong> — for this setup, ${escapeHtml(freeR.plan.name)}'s higher evening rates cost more than the free hours save (by about ${fmt$(diff)}/yr).`;
   } else {
     tipEl.innerHTML = 'No regulated free-midday plan in this area yet — modelled on a standard flat-rate plan.';
   }
+  if (d.evKwh) tipEl.innerHTML += ` EV charging is timed to ${freeR && bk === 'free' ? 'the free window' : 'midday solar'} (~${EV_KWH_YEAR.toLocaleString('en-AU')} kWh/yr).`;
   const compareSite = d.state === 'VIC' ? 'Victorian Energy Compare' : 'Energy Made Easy';
   const optIn = d.state === 'VIC' ? 'Midday Power Saver is opt-in with the retailer from 1 Oct 2026.' : (multi ? 'Solar Sharer is opt-in with the retailer (needs a smart meter).' : '');
+  const fitText = d.fitByHour ? 'WA buyback feed-in (2¢, or 10¢ 3–9pm)' : `a ${d.fitC.toFixed(1)}¢ feed-in tariff`;
   document.getElementById('planFoot').textContent =
-    `${optIn} Bills include supply charges and a ${d.fitC.toFixed(1)}¢ feed-in tariff. Compare offers at ${compareSite}.`.trim();
+    `${optIn} Bills include supply charges and ${fitText}. Compare offers at ${compareSite}.`.trim();
+  renderDataWarnings(d);
+}
+
+function renderAgentFields() {
+  const s = getSettings();
+  const n = document.getElementById('editAgentName'), ph = document.getElementById('editAgentPhone');
+  if (n) n.textContent = s.agentName || '';
+  if (ph) ph.textContent = s.agentPhone ? '+' + s.agentPhone : '';
+}
+
+function renderDataWarnings(d) {
+  const el = document.getElementById('dataWarn');
+  if (!el) return;
+  const t = todayIso(), w = [];
+  if (t > PRICE_DATA_VALID_UNTIL) w.push('Reference prices are 2026–27 and have expired — update the tariff tables before quoting.');
+  if (t > REBATE_DATA_VALID_UNTIL) w.push('Battery rebate factors after Dec 2027 aren\'t loaded — check the current STC factor.');
+  if (!d.tariffVerified) w.push(`${d.state} prices (${d.tariffSource}) — tap the usage rate below and match it to their bill.`);
+  el.innerHTML = w.map(x => `<div>⚠️ ${escapeHtml(x)}</div>`).join('');
+  el.style.display = w.length ? '' : 'none';
 }
 
 function renderPricingPanel(r) {
@@ -3020,13 +3191,17 @@ function renderPricingPanel(r) {
   const s = d.settings;
   const fmtCents = (v) => `${(Math.round(v * 10) / 10).toFixed(1)}¢`;
   document.getElementById('editRetail').textContent = fmtCents(d.flatRateC);
-  document.getElementById('editFit').textContent = fmtCents(d.fitC);
+  document.getElementById('editFit').textContent = d.fitByHour ? '2¢ / 10¢' : fmtCents(d.fitC);
   document.getElementById('editSupply').textContent = `$${d.supply.toFixed(2)}/day`;
   document.getElementById('editInstall').textContent = fmt$(d.solarCost);
   document.getElementById('editBatteryPerKwh').textContent = fmt$(s.batteryPerKwh);
   document.getElementById('editStc').textContent = `$${s.stcPrice}`;
   document.getElementById('editLoanRate').textContent = `${(s.loanRate * 100).toFixed(2)}%`;
   document.getElementById('editLoanYears').textContent = `${s.loanYears} yrs`;
+  document.getElementById('editVpp').textContent = d.vpp ? fmt$(d.vpp) : '$0';
+  document.getElementById('editVpp').classList.toggle('changed', !!d.vpp);
+  document.getElementById('cellVpp').classList.toggle('is-hidden', !d.batKwh);
+  renderAgentFields();
   document.getElementById('cellInstall').classList.toggle('is-hidden', d.mode === 'addBattery');
   const noBat = d.mode === 'solar';
   document.getElementById('cellBatteryPrice').classList.toggle('is-hidden', noBat);
@@ -3064,6 +3239,7 @@ function parsePricingValue(field, raw) {
     case 'loanRate':                          // "9.49", "9.49%", "1" → percent; "0.0949" → fraction
       return clamp(hasPct || n >= 1 ? n / 100 : n, 0, 0.3);
     case 'loanYears': return clamp(Math.round(n), 1, 15);
+    case 'vppCredit': return clamp(n, 0, 3000);
     default: return n;
   }
 }
@@ -3241,8 +3417,10 @@ function buildShareMessage(r) {
     const bp = d.best.plan;
     lines.push(bp.kind === 'free'
       ? `• Best plan: ${bp.name} (free power ${fmtHour(bp.free.start)}–${fmtHour(bp.free.end)})`
+      : bp.kind === 'vpp' ? `• Best plan: a VPP battery plan (~${fmt$(bp.vppCredit)}/yr credit)`
       : `• Best plan: stay on a flat-rate plan`);
   }
+  lines.push('', `Your full breakdown: ${buildCustomerLink(r)}`);
   lines.push('', 'Worth a quick 10-min chat this week to lock it in?');
   return lines.join('\n');
 }
@@ -3317,7 +3495,7 @@ function saveRecents(arr) {
 }
 
 function saveToRecents(r) {
-  if (!lastCalcInputs) return;
+  if (!lastCalcInputs || customerMode) return;
   const recents = loadRecents();
   const c = lastCalcInputs;
   const entry = {
@@ -3333,12 +3511,13 @@ function saveToRecents(r) {
     bill: c.bill,
     inputSizeKw: c.sizeKw,
     inputBatteryKwh: c.batteryKwh,
+    ev: !!c.ev,
     batteryKwh: r.deal ? r.deal.batKwh : 0
   };
   // Dedupe: same customer + postcode + mode + inputs overwrites the previous entry
   const filtered = recents.filter(e => !(e.postcode === entry.postcode && e.customerName === entry.customerName &&
     (e.mode || 'solar') === entry.mode && (e.inputSizeKw != null ? e.inputSizeKw : e.sizeKw) === (entry.inputSizeKw != null ? entry.inputSizeKw : entry.sizeKw) &&
-    (e.bill || null) === (entry.bill || null) && (e.inputBatteryKwh || null) === (entry.inputBatteryKwh || null)));
+    (e.bill || null) === (entry.bill || null) && (e.inputBatteryKwh || null) === (entry.inputBatteryKwh || null) && !!e.ev === entry.ev));
   filtered.unshift(entry);
   saveRecents(filtered);
   renderRecents();
@@ -3374,6 +3553,7 @@ function renderRecents() {
       document.getElementById('size').value = sz != null ? sz : '';
       document.getElementById('bill').value = e.bill || '';
       document.getElementById('battery').value = e.inputBatteryKwh || '';
+      document.getElementById('ev').checked = !!e.ev;
       document.getElementById('location').value = e.location || e.postcode;
       handleCalculate();
     });
@@ -3403,14 +3583,33 @@ function setupRecents() {
   }
 }
 
-const SETTING_FIELDS = ['batteryPerKwh', 'stcPrice', 'loanRate', 'loanYears'];
+const SETTING_FIELDS = ['batteryPerKwh', 'stcPrice', 'loanRate', 'loanYears', 'agentName', 'agentPhone'];
+const TEXT_FIELDS = ['agentName', 'agentPhone'];
+// AU mobile → wa.me format: "0412 345 678" / "+61 412…" → "61412345678"
+function normalisePhone(raw) {
+  let d = String(raw || '').replace(/[^0-9]/g, '');
+  if (!d) return '';
+  if (d.startsWith('0')) d = '61' + d.slice(1);
+  if (d.length < 9 || d.length > 15) return null;
+  return d;
+}
 function setupPricingPanel() {
-  const fields = ['editRetail','editFit','editSupply','editInstall','editBatteryPerKwh','editStc','editLoanRate','editLoanYears'];
+  const fields = ['editRetail','editFit','editSupply','editInstall','editBatteryPerKwh','editStc','editLoanRate','editLoanYears','editVpp','editAgentName','editAgentPhone'];
   fields.forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
+    el.addEventListener('focus', () => { el.dataset.shown = el.textContent; });
     el.addEventListener('blur', () => {
       const field = el.dataset.field;
+      if (el.textContent === el.dataset.shown) return;   // tapped in and out without changing anything
+      if (TEXT_FIELDS.includes(field)) {
+        const raw = String(el.textContent || '').trim().replace(/^tap to add$/i, '');
+        const v = field === 'agentPhone' ? normalisePhone(raw) : raw.slice(0, 40);
+        if (v === null) { showToast('Mobile number looks wrong — e.g. 0412 345 678', 'error'); }
+        else saveSetting(field, v);
+        if (lastCalcInputs) recalcWithOverrides(); else renderAgentFields();
+        return;
+      }
       const newVal = parsePricingValue(field, el.textContent);
       if (newVal == null) {
         recalcWithOverrides(); // re-render to restore display
@@ -3437,6 +3636,7 @@ function setupPricingPanel() {
     netSel.addEventListener('change', () => {
       if (!lastCalcInputs) return;
       lastCalcInputs.networkKey = netSel.value || null;
+      delete lastCalcInputs.pkgAnchor;
       delete pricingOverrides.retailRate;   // new network → its own default rates
       delete pricingOverrides.supply;
       recalcWithOverrides();
@@ -3715,6 +3915,174 @@ function setupReadyPulse() {
   document.getElementById('bill').addEventListener('input', check);
 }
 
+/* ---------- v3: Good / Better / Best ---------- */
+function stepSize(list, v, dir) {
+  if (dir < 0) { const lower = list.filter(x => x < v - 0.05); return lower.length ? lower[lower.length - 1] : v; }
+  if (dir > 0) { const higher = list.filter(x => x > v + 0.05); return higher.length ? higher[0] : v; }
+  return v;
+}
+function renderPackages(d) {
+  const box = document.getElementById('packages'), grid = document.getElementById('pkgGrid');
+  const c = lastCalcInputs;
+  // Anchor = the system that was quoted; options step around it and never re-centre on a tapped option
+  if (!c.pkgAnchor) c.pkgAnchor = { s: d.solarKw, b: d.batKwh, ic: pricingOverrides.installCost != null ? pricingOverrides.installCost : null };
+  const A = c.pkgAnchor;
+  const onAnchor = Math.abs(d.solarKw - A.s) < 0.01 && Math.abs((d.batKwh || 0) - (A.b || 0)) < 0.01;
+  if (onAnchor) A.ic = pricingOverrides.installCost != null ? pricingOverrides.installCost : null;   // agent edited the quoted price
+  // The agent's discount on the quoted solar price applies to the other options too
+  const ratio = (d.mode !== 'addBattery' && A.ic != null) ? A.ic / defaultInstallCost(A.s) : 1;
+  const tiers = [['Good', -1], ['Better', 0], ['Best', 1]];
+  const seen = new Set(), cards = [];
+  tiers.forEach(([tier, dir]) => {
+    const sKw = d.mode === 'addBattery' ? d.solarKw : stepSize(SOLAR_SIZES, A.s, dir);
+    const bKwh = d.mode === 'solar' ? 0 : stepSize(BATTERY_SIZES, A.b, dir);
+    const key = sKw + '|' + bKwh;
+    if (seen.has(key)) return;
+    seen.add(key);
+    const isAnchor = dir === 0;
+    const installCost = d.mode === 'addBattery' ? 0 : isAnchor
+      ? (A.ic != null ? A.ic : defaultInstallCost(sKw)) : Math.round(defaultInstallCost(sKw) * ratio);
+    const selected = Math.abs(sKw - d.solarKw) < 0.01 && Math.abs(bKwh - (d.batKwh || 0)) < 0.01;
+    const x = selected ? d : computeDeal(c, { sizeKw: sKw, batteryKwh: bKwh || null, installCost });
+    cards.push({ tier, sKw, bKwh, x, isAnchor, selected, installCost });
+  });
+  if (cards.length < 2) { box.style.display = 'none'; return; }
+  box.style.display = '';
+  box.querySelector('h3').textContent = cards.length === 3 ? 'Three ways to do it' : 'Two ways to do it';
+  grid.innerHTML = cards.map((k, i) => {
+    const x = k.x, q = Math.max(0, x.afterAnnual / 4);
+    const size = d.mode === 'solar' ? `${k.sKw} kW solar` : d.mode === 'addBattery' ? `${k.bKwh} kWh battery` : `${k.sKw} kW + ${k.bKwh} kWh`;
+    return `<button type="button" class="pkg${k.selected ? ' current' : ''}" data-pkg="${i}">
+      <div class="pkg-tier">${k.tier}${k.isAnchor ? ' · your quote' : ''}</div>
+      <div class="pkg-size">${escapeHtml(size)}</div>
+      <div class="pkg-row"><span>Price</span><b>${fmt$(x.total)}</b></div>
+      <div class="pkg-row hl"><span>Bill</span><b>${fmt$(q)}/qtr</b></div>
+      <div class="pkg-row"><span>Saves</span><b>${fmt$(x.weeklySave)}/wk</b></div>
+      <div class="pkg-row"><span>Repayments</span><b>${fmt$(x.weeklyRepay)}/wk</b></div>
+      <div class="pkg-row"><span>Payback</span><b>${x.paybackYears ? '~' + x.paybackYears.toFixed(1) + ' yrs' : '—'}</b></div>
+    </button>`;
+  }).join('');
+  grid.querySelectorAll('.pkg').forEach(el => el.addEventListener('click', () => {
+    const k = cards[parseInt(el.dataset.pkg, 10)];
+    if (k.selected) return;
+    if (d.mode !== 'addBattery') { lastCalcInputs.sizeKw = k.sKw; if (!customerMode) document.getElementById('size').value = k.sKw; }
+    if (d.mode !== 'solar') { lastCalcInputs.batteryKwh = k.bKwh; if (!customerMode) document.getElementById('battery').value = k.bKwh; }
+    lastCalcInputs.recS = false; lastCalcInputs.recB = false;
+    if (d.mode !== 'addBattery') {
+      if (k.isAnchor && A.ic == null) delete pricingOverrides.installCost; else pricingOverrides.installCost = k.installCost;
+    }
+    recalcWithOverrides();
+  }));
+}
+
+/* ---------- v3: customer link (no server — the quote rides in the URL fragment, never sent to a server) ---------- */
+function b64urlEncode(str) { return btoa(unescape(encodeURIComponent(str))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+function b64urlDecode(b) { b = b.replace(/-/g, '+').replace(/_/g, '/'); while (b.length % 4) b += '='; return decodeURIComponent(escape(atob(b))); }
+function buildCustomerLink(r) {
+  const c = lastCalcInputs, d = r.deal, s = getSettings();
+  const payload = {
+    v: 1, n: getCustomerName(), m: c.mode, b: c.bill || 0,
+    s: d.mode === 'addBattery' ? c.sizeKw : d.solarKw, bt: d.batKwh || 0,
+    pc: c.postcode, st: c.state, la: +(+c.lat).toFixed(4), lo: +(+c.lon).toFixed(4),
+    loc: (c.locationDisplay || '').split(',').slice(0, 2).join(','), nk: c.networkKey || '', ev: c.ev ? 1 : 0,
+    po: pricingOverrides,
+    se: { batteryPerKwh: s.batteryPerKwh, stcPrice: s.stcPrice, loanRate: s.loanRate, loanYears: s.loanYears,
+          loanWeeklyFee: s.loanWeeklyFee, loanEstab: s.loanEstab, agentName: s.agentName, agentPhone: s.agentPhone },
+    ns: c.nasaData ? c.nasaData.monthly.map(v => +(+v).toFixed(3)) : null,
+    dt: c.quoteDate || todayIso(), ra: (d.solarAuto || c.recS) ? 1 : 0, ba: (d.batAuto || c.recB) ? 1 : 0
+  };
+  return `${location.origin}${location.pathname}#q=${b64urlEncode(JSON.stringify(payload))}`;
+}
+// Every field is type- and range-checked; anything unexpected is dropped (or the link is rejected)
+function sanitizeLinkPayload(raw) {
+  if (!raw || typeof raw !== 'object' || raw.v !== 1) return null;
+  const num = (v, lo, hi) => { const n = typeof v === 'number' ? v : (typeof v === 'string' && v.trim() !== '' ? Number(v) : NaN); return Number.isFinite(n) && n >= lo && n <= hi ? n : null; };
+  const str = (v, max) => typeof v === 'string' ? v.slice(0, max) : '';
+  const st = ['NSW', 'VIC', 'QLD', 'SA', 'WA', 'TAS', 'NT', 'ACT'].includes(raw.st) ? raw.st : null;
+  const pc = typeof raw.pc === 'string' && /^\d{4}$/.test(raw.pc) ? raw.pc : null;
+  const m = ['solar', 'solarBattery', 'addBattery'].includes(raw.m) ? raw.m : null;
+  const la = num(raw.la, -45, -9), lo = num(raw.lo, 112, 155);
+  if (!st || !pc || !m || la == null || lo == null) return null;
+  const s = num(raw.s, 0.5, 100), bt = num(raw.bt, 0, 100);
+  if (m !== 'solar' && !bt && m === 'addBattery') return null;
+  if (m !== 'addBattery' && !s) return null;
+  const po = {}, rawPo = raw.po && typeof raw.po === 'object' ? raw.po : {};
+  [['retailRate', 5, 200], ['fitRate', 0, 100], ['supply', 0, 5], ['installCost', 0, 1000000], ['vppCredit', 0, 3000]]
+    .forEach(([k, a, b]) => { const v = num(rawPo[k], a, b); if (v != null) po[k] = v; });
+  const se = {}, rawSe = raw.se && typeof raw.se === 'object' ? raw.se : {};
+  [['batteryPerKwh', 100, 5000], ['stcPrice', 0, 100], ['loanRate', 0, 0.3], ['loanYears', 1, 15], ['loanWeeklyFee', 0, 20], ['loanEstab', 0, 2000]]
+    .forEach(([k, a, b]) => { const v = num(rawSe[k], a, b); if (v != null) se[k] = v; });
+  se.agentName = str(rawSe.agentName, 40);
+  se.agentPhone = normalisePhone(str(rawSe.agentPhone, 20)) || '';
+  const ns = Array.isArray(raw.ns) && raw.ns.length === 12 && raw.ns.every(v => num(v, 0, 15) != null) ? raw.ns.map(Number) : null;
+  const nk = typeof raw.nk === 'string' && NETWORKS[raw.nk] && NETWORKS[raw.nk].state === st ? raw.nk : '';
+  const dt = typeof raw.dt === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(raw.dt) ? raw.dt : null;
+  return { n: str(raw.n, 40), m, b: num(raw.b, 50, 20000), s, bt, pc, st, la, lo, loc: str(raw.loc, 80), nk, ev: raw.ev === 1,
+           po, se, ns, dt, ra: raw.ra === 1, ba: raw.ba === 1 };
+}
+function showLinkError(msg) {
+  document.body.classList.add('customer-view');
+  const el = document.getElementById('linkError');
+  el.textContent = msg; el.style.display = '';
+}
+function loadCustomerLink() {
+  const h = location.hash || '';
+  if (!h.startsWith('#q=')) return false;
+  let p;
+  try { p = sanitizeLinkPayload(JSON.parse(b64urlDecode(h.slice(3)))); } catch (e) { p = null; }
+  if (!p) { showLinkError('This quote link looks incomplete — ask for a fresh one.'); return false; }
+  customerMode = true;
+  document.body.classList.add('customer-view');
+  SETTINGS_OVERRIDE = p.se || {};
+  pricingOverrides = p.po || {};
+  document.getElementById('customerName').value = p.n || '';
+  setMode(p.m);
+  const ns = Array.isArray(p.ns) && p.ns.length === 12 ? { monthly: p.ns, annualPSH: p.ns.reduce((a, b) => a + b, 0) / 12 } : null;
+  lastCalcInputs = {
+    sizeKw: p.s || null, postcode: p.pc, state: p.st, lat: p.la, lon: p.lo, nasaData: ns,
+    locationDisplay: p.loc || `Postcode ${p.pc}`, mode: p.m, bill: p.b || null,
+    batteryKwh: p.bt || null, ev: !!p.ev, networkKey: p.nk || null, quoteDate: p.dt, recS: p.ra, recB: p.ba
+  };
+  document.title = p.n ? `${p.n}'s solar quote — GridBeater` : 'Your solar quote — GridBeater';
+  try {
+    const r = computeAll();
+    r.__fromOverride = true;   // no recents, no auto-scroll
+    renderResults(r);
+  } catch (e) {
+    console.error(e);
+    showLinkError('This quote link couldn\'t be opened — ask for a fresh one.');
+    return false;
+  }
+  return true;
+}
+function renderBooking(d) {
+  const card = document.getElementById('bookCard');
+  if (!customerMode) { card.style.display = ''; return; }
+  const s = getSettings();
+  document.getElementById('preparedBy').textContent = s.agentName ? `Prepared by ${s.agentName}` : '';
+  if (!s.agentPhone) { card.style.display = 'none'; return; }
+  card.style.display = '';
+  const name = getCustomerName();
+  const msg = `Hi${s.agentName ? ' ' + s.agentName : ''}, it's ${name || 'me'} — I'd like to book my free roof check for the ${sizesLabel(d)} quote.`;
+  document.getElementById('bookBtn').href = `https://wa.me/${s.agentPhone}?text=${encodeURIComponent(msg)}`;
+  document.getElementById('callBtn').href = `tel:+${s.agentPhone}`;
+  document.getElementById('agentNameText').textContent = s.agentName ? `${s.agentName} on +${s.agentPhone}` : `+${s.agentPhone}`;
+}
+function setupCustomerLinkButton() {
+  const btn = document.getElementById('shareLink');
+  btn.addEventListener('click', async () => {
+    if (!currentResult) { showToast('Run a calculation first', 'error'); return; }
+    const link = buildCustomerLink(currentResult);
+    try { await navigator.clipboard.writeText(link); }
+    catch (e) {
+      const ta = document.createElement('textarea'); ta.value = link; document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); } catch (e2) { /* ignore */ }
+      ta.remove();
+    }
+    showToast(getSettings().agentPhone ? 'Customer link copied' : 'Link copied — add your mobile in the assumptions to show a Book button', getSettings().agentPhone ? 'success' : 'error');
+  });
+}
+
 /* ---------- v2: mode switch ---------- */
 const MODE_KEY = 'whatifsolar_mode_v2';
 let currentMode = 'solarBattery';
@@ -3733,7 +4101,7 @@ function setMode(mode) {
     sizeInput.placeholder = 'auto from bill';
     document.getElementById('sizeHint').textContent = 'Leave blank to recommend from the bill.';
   }
-  try { localStorage.setItem(MODE_KEY, mode); } catch (e) { /* ignore */ }
+  if (!customerMode) { try { localStorage.setItem(MODE_KEY, mode); } catch (e) { /* ignore */ } }
 }
 function setupModeSwitch() {
   let saved = null;
@@ -3750,6 +4118,7 @@ function setupModeSwitch() {
       // Solar <-> Solar + Battery: same inputs, recalc live. Add battery changes what the bill means → fresh calc.
       if (prev !== 'addBattery' && b.dataset.mode !== 'addBattery') {
         lastCalcInputs.mode = b.dataset.mode;
+        delete lastCalcInputs.pkgAnchor;
         if (b.dataset.mode === 'solarBattery') {
           const bv = parseFloat(document.getElementById('battery').value);
           lastCalcInputs.batteryKwh = bv > 0 ? bv : null;
@@ -3786,6 +4155,10 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   setupModeSwitch();
   setupMoreDetails();
+  setupCustomerLinkButton();
+  document.getElementById('ev').addEventListener('change', (e) => {
+    if (lastCalcInputs && !customerMode) { lastCalcInputs.ev = e.target.checked; delete lastCalcInputs.pkgAnchor; recalcWithOverrides(); }
+  });
   setupAdvancedToggle();
   setupSeasonalTabs();
   setupScreenshotButtons();
@@ -3794,6 +4167,8 @@ document.addEventListener('DOMContentLoaded', () => {
   setupCompare();
   setupShareButtons();
   setupRecents();
+  renderAgentFields();
+  loadCustomerLink();
 });
 </script>
 

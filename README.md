@@ -14,6 +14,19 @@ Single self-contained page (`index.html`), deployed on Vercel.
 - Battery price, STC price, loan rate and term are editable and remembered on the device
 - Technical detail (chart, size comparison, method) collapsed by default
 
+## v3 (weekend build, stacked on v2)
+- **Three ways to do it** — Good / Better / Best priced options; tap one to switch the quote
+- **Customer link** — the whole quote travels in the URL fragment (never sent to a server): the customer sees a clean
+  read-only page with exactly the agent's numbers, a **Book my free roof check** button (WhatsApp to the agent) and
+  "Prepared by". Set *Your name* and *Your mobile* once in the assumptions panel. The WhatsApp message now includes the link.
+- **Adding an EV** tick box (~2,000 kWh/yr, charged in the free window or midday solar)
+- **VPP credit** per customer — adds a "VPP battery plan" option to the plan card
+- **All states**: TAS (OTTER), regional QLD (Ergon/QCA), NT (Jacana) regulated tariffs; WA buyback (DEBS 2c / 10c 3–9pm);
+  WA and ACT flagged to the agent as unconfirmed for 2026–27
+- **Agent-only warnings** when prices are unconfirmed or past their valid-until date (30 Jun 2027; rebate data to Dec 2027)
+- Not included: open-tracking of links (needs a small database) and bill-photo upload (GridBeater's extractor runs server-side
+  with an API key) — both need a decision from the owner.
+
 ## Tests
     node tests/engine_test.js          # engine maths, extracted from index.html
     python3 tests/ui_test.py [outdir]  # Playwright: scenarios, mobile, offline fallback (mocks geocoding + NASA)
