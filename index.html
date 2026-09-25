@@ -1031,6 +1031,161 @@
     margin-right: 10px;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ===== v2 — sales layer ===== */
+  .mode-switch {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+    padding: 4px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 18px;
+  }
+  .mode-btn {
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 10px 8px;
+    border: none;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .mode-btn:hover { color: var(--text); }
+  .mode-btn[aria-pressed="true"] { background: #fff; color: var(--accent); box-shadow: var(--shadow-sm); }
+  @media (max-width: 420px) { .mode-btn { font-size: 13px; padding: 10px 4px; } }
+
+  .input-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  .input-grid .span-2 { grid-column: 1 / -1; }
+  @media (max-width: 600px) { .input-grid { grid-template-columns: 1fr; } .input-grid .span-2 { grid-column: auto; } }
+  .field .hint { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+  .field.is-hidden { display: none; }
+  .input-prefix { position: relative; }
+  .input-prefix > span {
+    position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+    color: var(--text-muted); font-size: 15px; pointer-events: none;
+  }
+  .input-prefix > input { padding-left: 28px; }
+  .field label .tag-rec {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--success); margin-left: 6px;
+  }
+
+  /* Deal card — the money story, sits directly under the hero */
+  .deal {
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    margin: 0 0 16px;
+    background: #fff;
+  }
+  .deal-bill-label {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--text-muted); font-weight: 600; text-align: center;
+  }
+  .deal-bill {
+    display: flex; align-items: baseline; justify-content: center; flex-wrap: wrap;
+    gap: 6px 12px; margin: 6px 0 2px; line-height: 1.1;
+  }
+  .deal-bill .from {
+    font-size: clamp(22px, 5vw, 30px); font-weight: 600; color: var(--text-muted);
+    text-decoration: line-through; text-decoration-thickness: 2px; text-decoration-color: rgba(185,28,28,0.55);
+  }
+  .deal-bill .arrow { font-size: 22px; color: var(--text-muted); }
+  .deal-bill .to { font-size: clamp(34px, 8vw, 46px); font-weight: 800; letter-spacing: -0.03em; color: var(--success); }
+  .deal-bill .per { font-size: 14px; color: var(--text-muted); font-weight: 500; }
+  .deal-bill-sub { text-align: center; font-size: 13px; color: var(--text-muted); margin-bottom: 16px; }
+  .deal-bill-sub strong { color: var(--text); font-weight: 600; }
+
+  .deal-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  .deal-tile { background: var(--card); border-radius: 10px; padding: 12px 10px; text-align: center; border: 1px solid transparent; }
+  .deal-tile .k { font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+  .deal-tile .v { font-size: clamp(20px, 4.4vw, 26px); font-weight: 800; letter-spacing: -0.02em; margin-top: 4px; color: var(--text); }
+  .deal-tile .s { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .deal-tile.good { background: rgba(5,150,105,0.08); border-color: rgba(5,150,105,0.25); }
+  .deal-tile.good .v { color: var(--success); }
+  .deal-tile.warn .v { color: var(--text); }
+  @media (max-width: 480px) {
+    .deal-tiles { gap: 6px; }
+    .deal-tile { padding: 10px 4px; }
+    .deal-tile .k { font-size: 10px; letter-spacing: 0.02em; }
+    .deal-tile .s { font-size: 10px; line-height: 1.3; }
+  }
+
+  .deal-verdict {
+    margin-top: 12px; text-align: center; font-size: 14px; font-weight: 600; color: var(--text);
+  }
+  .deal-price {
+    margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--border);
+    display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px 14px;
+    font-size: 13px; color: var(--text-muted); text-align: center;
+  }
+  .deal-price strong { color: var(--text); }
+  .urgency {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: #FEF3C7; color: #92400E; border: 1px solid #FCD34D;
+    border-radius: 999px; padding: 5px 12px; font-size: 12px; font-weight: 700;
+  }
+  .urgency:empty { display: none; }
+
+  /* Best-plan card */
+  .plans { border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px; margin: 0 0 16px; background: #fff; }
+  .plans-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+  .plans-head h3 { font-size: 15px; margin: 0; font-weight: 700; }
+  .plans-net { font-size: 12px; color: var(--text-muted); }
+  .plans-net select {
+    font-family: inherit; font-size: 12px; color: var(--text); border: 1px solid var(--border);
+    border-radius: 6px; padding: 3px 6px; background: #fff; margin-left: 4px;
+  }
+  .plans-net .net-text { display: none; font-weight: 600; color: var(--text); }
+  .plan-row {
+    display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 4px 12px;
+    padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); margin-top: 8px;
+  }
+  .plan-row.best { border-color: var(--success); background: rgba(5,150,105,0.06); }
+  .plan-name { font-size: 14px; font-weight: 600; }
+  .plan-name .badge {
+    display: inline-block; margin-left: 6px; font-size: 10px; font-weight: 800; letter-spacing: 0.06em;
+    text-transform: uppercase; color: #fff; background: var(--success); border-radius: 4px; padding: 2px 6px; vertical-align: 2px;
+  }
+  .plan-desc { font-size: 12px; color: var(--text-muted); grid-column: 1 / 2; }
+  .plan-bill { font-size: 16px; font-weight: 700; text-align: right; grid-row: 1 / span 2; grid-column: 2; }
+  .plan-bill small { display: block; font-size: 11px; font-weight: 500; color: var(--text-muted); }
+  .plan-tip { margin-top: 10px; font-size: 13px; color: var(--text); line-height: 1.5; }
+  .plan-tip strong { color: var(--success); }
+  .plan-foot { margin-top: 8px; font-size: 11px; color: var(--text-muted); line-height: 1.5; }
+
+  body.screenshot-top .plans-net select { display: none; }
+  body.screenshot-top .plans-net .net-text { display: inline; }
+
+  /* Collapsed technical section */
+  details.more-details { margin-bottom: 20px; }
+  details.more-details > summary {
+    list-style: none; cursor: pointer; padding: 14px 18px; border: 1px solid var(--border);
+    border-radius: var(--radius); background: var(--card); font-size: 14px; font-weight: 600;
+    color: var(--text-muted); display: flex; align-items: center; gap: 8px;
+  }
+  details.more-details > summary::-webkit-details-marker { display: none; }
+  details.more-details > summary::after { content: '+'; margin-left: auto; font-size: 18px; }
+  details.more-details[open] > summary { margin-bottom: 12px; color: var(--text); }
+  details.more-details[open] > summary::after { content: '−'; }
+  body.screenshot-bottom details.more-details > summary { display: none; }
+  body.screenshot-top details.more-details { display: none !important; }
+
+  .pricing-cell.is-hidden { display: none; }
+  .pricing-group-label {
+    grid-column: 1 / -1; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--text-muted); font-weight: 700; margin-top: 6px; padding-top: 8px; border-top: 1px dashed var(--border);
+  }
 </style>
 </head>
 <body>
@@ -1059,16 +1214,31 @@
 
   <!-- Input section -->
   <section class="input-section">
-    <div class="field field-customer">
-      <label for="customerName">Customer name <span class="optional">(optional — appears on screenshot)</span></label>
-      <input type="text" id="customerName" placeholder="e.g. Sarah Wilson" autocomplete="off" />
+    <div class="mode-switch" role="group" aria-label="What are we quoting?">
+      <button type="button" class="mode-btn" data-mode="solar" aria-pressed="false">Solar</button>
+      <button type="button" class="mode-btn" data-mode="solarBattery" aria-pressed="true">Solar + Battery</button>
+      <button type="button" class="mode-btn" data-mode="addBattery" aria-pressed="false">Add battery</button>
     </div>
-    <div class="input-row">
+    <div class="input-grid">
       <div class="field">
-        <label for="size">System Size (kW)</label>
-        <input type="number" id="size" placeholder="e.g. 6.6" step="0.1" min="0.5" max="100" />
+        <label for="customerName">Customer name <span class="optional">(on screenshot)</span></label>
+        <input type="text" id="customerName" placeholder="e.g. Sarah Wilson" autocomplete="off" />
       </div>
       <div class="field">
+        <label for="bill">Quarterly power bill <span class="optional">(makes it their numbers)</span></label>
+        <div class="input-prefix"><span>$</span><input type="number" id="bill" placeholder="e.g. 650" step="10" min="0" max="20000" inputmode="decimal" /></div>
+      </div>
+      <div class="field" id="sizeField">
+        <label for="size" id="sizeLabel">Solar size (kW)</label>
+        <input type="number" id="size" placeholder="auto from bill" step="0.1" min="0.5" max="100" inputmode="decimal" />
+        <div class="hint" id="sizeHint">Leave blank to recommend from the bill.</div>
+      </div>
+      <div class="field" id="batteryField">
+        <label for="battery">Battery (usable kWh)</label>
+        <input type="number" id="battery" placeholder="auto" step="0.5" min="1" max="100" inputmode="decimal" />
+        <div class="hint">Leave blank to recommend.</div>
+      </div>
+      <div class="field span-2">
         <label for="location">Location (postcode, suburb, or address)</label>
         <input type="text" id="location" placeholder="e.g. 3029 or Hoppers Crossing" autocomplete="off" />
       </div>
@@ -1122,19 +1292,63 @@
           <line x1="8" y1="48" x2="56" y2="48" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
         </svg>
         <div class="hero-greeting" id="heroGreeting"></div>
-        <div class="hero-kwh-label">Average annual production</div>
+        <div class="hero-kwh-label" id="heroKwhLabel">Average annual production</div>
         <div class="hero-kwh">
           <span class="hero-kwh-number" id="heroGenKwh">—</span><span class="hero-kwh-unit">kWh</span>
         </div>
         <p class="hero-bill">
-          Reduces your bill by <strong>$<span id="heroSavings">0</span></strong> / year
+          <span id="heroBillLead">Reduces your bill by</span> <strong>$<span id="heroSavings">0</span></strong> / year
         </p>
         <div class="horizon"></div>
         <p class="subtitle">
           <strong id="heroPayback">—</strong> payback
           <span class="hero-sep coverage-sep" id="coverageSep">·</span>
-          <span id="coveragePhrase">covers <strong id="coveragePct">—</strong> of an avg <span id="stateName">—</span> home</span>
+          <span id="coveragePhrase">covers <strong id="coveragePct">—</strong> of <span id="coverageWhose">an avg <span id="stateName">—</span> home</span></span>
         </p>
+      </div>
+
+      <!-- v2: the money story -->
+      <div class="deal" id="deal">
+        <div class="deal-bill-label" id="dealBillLabel">Power bill</div>
+        <div class="deal-bill">
+          <span class="from" id="dealBillFrom">$—</span>
+          <span class="arrow" aria-hidden="true">→</span>
+          <span class="to" id="dealBillTo">$—</span>
+          <span class="per">a quarter</span>
+        </div>
+        <div class="deal-bill-sub" id="dealBillSub"></div>
+        <div class="deal-tiles">
+          <div class="deal-tile good">
+            <div class="k">Saves</div>
+            <div class="v" id="dealSaveWk">$—</div>
+            <div class="s">per week</div>
+          </div>
+          <div class="deal-tile">
+            <div class="k">Repayments</div>
+            <div class="v" id="dealRepayWk">$—</div>
+            <div class="s" id="dealRepaySub">per week</div>
+          </div>
+          <div class="deal-tile" id="dealNetTile">
+            <div class="k">Net</div>
+            <div class="v" id="dealNetWk">$—</div>
+            <div class="s">per week</div>
+          </div>
+        </div>
+        <div class="deal-verdict" id="dealVerdict"></div>
+        <div class="deal-price">
+          <span id="dealPrice"></span>
+          <span class="urgency" id="dealUrgency"></span>
+        </div>
+      </div>
+
+      <div class="plans" id="plans">
+        <div class="plans-head">
+          <h3>Best energy plan for this system</h3>
+          <span class="plans-net" id="plansNetWrap">Network <select id="networkSelect" aria-label="Distribution network"></select><span class="net-text" id="networkText"></span></span>
+        </div>
+        <div id="planRows"></div>
+        <div class="plan-tip" id="planTip"></div>
+        <div class="plan-foot" id="planFoot"></div>
       </div>
 
       <div class="season-context" id="seasonContext">
@@ -1194,7 +1408,7 @@
       <div class="pricing-panel" id="pricingPanel">
         <div class="pricing-panel-header">
           <div class="pricing-panel-title">Pricing assumptions <span style="text-transform:none; letter-spacing:0; color:var(--text-muted); font-weight:400;">(tap any number to edit)</span></div>
-          <button type="button" class="pricing-panel-reset" id="resetPricing">Reset to state defaults</button>
+          <button type="button" class="pricing-panel-reset" id="resetPricing">Reset to network defaults</button>
         </div>
         <div class="pricing-grid">
           <div class="pricing-cell">
@@ -1206,29 +1420,47 @@
             <span class="editable" id="editFit" contenteditable="true" inputmode="decimal" data-field="fitRate">—</span>
           </div>
           <div class="pricing-cell">
-            <span class="label">Self-consumption</span>
-            <span class="editable" id="editSelf" contenteditable="true" inputmode="decimal" data-field="selfConsumption">—</span>
+            <span class="label">Supply charge</span>
+            <span class="editable" id="editSupply" contenteditable="true" inputmode="decimal" data-field="supply">—</span>
+          </div>
+          <div class="pricing-cell" id="cellInstall">
+            <span class="label">Solar price (after STC)</span>
+            <span class="editable" id="editInstall" contenteditable="true" inputmode="decimal" data-field="installCost">—</span>
+          </div>
+          <div class="pricing-group-label" id="groupBattery">Battery &amp; finance <span style="text-transform:none; letter-spacing:0; font-weight:400;">(remembered for next time)</span></div>
+          <div class="pricing-cell" id="cellBatteryPrice">
+            <span class="label">Battery $/kWh (before rebate)</span>
+            <span class="editable" id="editBatteryPerKwh" contenteditable="true" inputmode="decimal" data-field="batteryPerKwh">—</span>
+          </div>
+          <div class="pricing-cell" id="cellStc">
+            <span class="label">STC price</span>
+            <span class="editable" id="editStc" contenteditable="true" inputmode="decimal" data-field="stcPrice">—</span>
           </div>
           <div class="pricing-cell">
-            <span class="label">Install cost (after STC)</span>
-            <span class="editable" id="editInstall" contenteditable="true" inputmode="decimal" data-field="installCost">—</span>
+            <span class="label">Loan rate p.a.</span>
+            <span class="editable" id="editLoanRate" contenteditable="true" inputmode="decimal" data-field="loanRate">—</span>
+          </div>
+          <div class="pricing-cell">
+            <span class="label">Loan term</span>
+            <span class="editable" id="editLoanYears" contenteditable="true" inputmode="decimal" data-field="loanYears">—</span>
           </div>
         </div>
       </div>
 
       <div class="disclaimer">
-        <strong>Estimate only.</strong> Based on NASA POWER satellite data and CER solar zone classification for Australian postcodes. Assumes 14% standard system losses and optimal panel orientation for your latitude. Actual generation varies <strong>±10–15%</strong> depending on weather, panel quality, shading, and installation specifics.
+        <strong>Estimate only, not a quote.</strong> Solar from NASA POWER satellite data (14% system losses, optimal orientation) — actual generation varies <strong>±10–15%</strong>. Bills modelled hour-by-hour on 2026–27 regulated reference prices (AER Default Market Offer, Victorian Default Offer / Midday Power Saver), with typical household usage patterns. Battery rebate: Cheaper Home Batteries Program, usable capacity. Finance is indicative and subject to credit approval.
       </div>
 
       <div class="screenshot-actions">
-        <button class="btn btn-secondary" data-screenshot="top">📸 Copy top as image</button>
-        <button class="btn btn-secondary" data-screenshot="bottom">📸 Copy bottom as image</button>
+        <button class="btn btn-secondary" data-screenshot="top">📸 Copy as image</button>
         <button class="btn btn-share" id="shareWhatsapp" type="button">📱 WhatsApp</button>
         <button class="btn btn-share" id="shareCopy" type="button">📋 Copy message</button>
       </div>
     </section>
 
-    <!-- BOTTOM SECTION -->
+    <!-- BOTTOM SECTION (technical detail, collapsed by default) -->
+    <details class="more-details" id="moreDetails">
+    <summary>More detail — monthly chart, system sizes, how we calculate</summary>
     <section class="bottom-section section-card">
       <div class="name-banner" id="nameBannerBottom"></div>
       <div class="meta-strip">
@@ -1318,6 +1550,7 @@
         <button class="btn btn-share" id="shareCopy2" type="button">📋 Copy message</button>
       </div>
     </section>
+    </details>
 
   </div>
 
@@ -1569,6 +1802,362 @@ const MONTHLY_FRACTIONS = [
 
 const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
+/* ============================================================
+   v2 SALES ENGINE — hourly energy model, battery, plans, rebate, finance
+   Pure functions (no DOM). Inlined into index.html; also unit-tested in node.
+   All tariff figures: regulated 2026–27 reference prices (incl. GST).
+   ============================================================ */
+
+// ---------- Tariff reference data ----------
+// Flat = Default Market Offer (AER DMO 2026–27) / Victorian Default Offer (ESC VDO 2026–27).
+// Free-midday = Solar Sharer Offer (NSW, SEQ, SA — DMO TOU with free window) /
+//               Victorian Midday Power Saver (1 Oct 2026 – 30 Jun 2027 schedule, DEECA).
+// Rates in $/kWh, supply in $/day.
+const NETWORKS = {
+  // ---- VIC (VDO flat; Midday Power Saver TOU) ----
+  POWERCOR: { state: 'VIC', label: 'Powercor', supply: 1.3805, flat: 0.2822,
+    free: { name: 'Midday Power Saver', start: 11, end: 14, cap: 24,
+      bands: { offpeak: 0.2462, soak: 0.1939, peak: 0.4381 },
+      scheme: 'VIC_MPS', supply: 1.3805 } },
+  CITIPOWER: { state: 'VIC', label: 'CitiPower', supply: 1.2114, flat: 0.2596,
+    free: { name: 'Midday Power Saver', start: 11, end: 14, cap: 24,
+      bands: { offpeak: 0.2322, soak: 0.1864, peak: 0.4036 }, scheme: 'VIC_MPS', supply: 1.2114 } },
+  JEMENA: { state: 'VIC', label: 'Jemena', supply: 1.2713, flat: 0.2747,
+    free: { name: 'Midday Power Saver', start: 11, end: 14, cap: 24,
+      bands: { offpeak: 0.2394, soak: 0.1983, peak: 0.3975 }, scheme: 'VIC_MPS', supply: 1.2712 } },
+  UNITED: { state: 'VIC', label: 'United Energy', supply: 1.1912, flat: 0.2735,
+    free: { name: 'Midday Power Saver', start: 11, end: 14, cap: 24,
+      bands: { offpeak: 0.2427, soak: 0.1939, peak: 0.4245 }, scheme: 'VIC_MPS', supply: 1.1912 } },
+  AUSNET: { state: 'VIC', label: 'AusNet', supply: 1.2824, flat: 0.3198,
+    free: { name: 'Midday Power Saver', start: 11, end: 14, cap: 24,
+      bands: { offpeak: 0.2478, soak: 0.1976, peak: 0.4982 }, scheme: 'VIC_MPS', supply: 1.2824 } },
+  // ---- NSW / SEQ / SA — AER DMO 2026–27 final determination, legislative instrument (GST incl.) ----
+  // Flat: s.9(1) residential flat rate tariff cap. Solar Sharer: s.9(6) SSO tariff, free window s.10,
+  // excess over 24 kWh in the free window at the reasonable use tariff cap, s.11.
+  // schedule(m, h) returns $/kWh for month m (0=Jan) and local clock hour h, outside the free window.
+  AUSGRID: { state: 'NSW', label: 'Ausgrid', supply: 1.662289, flat: 0.331372,
+    free: { name: 'Solar Sharer', start: 11, end: 14, cap: 24, scheme: 'SSO', supply: 1.764106, overRate: 0.275597,
+      // Peak 3pm–9pm in Nov–Mar and Jun–Aug; everything else off-peak
+      schedule: (m, h) => ([10, 11, 0, 1, 2, 5, 6, 7].includes(m) && h >= 15 && h < 21) ? 0.637177 : 0.275597 } },
+  ENDEAVOUR: { state: 'NSW', label: 'Endeavour Energy', supply: 1.851350, flat: 0.337273,
+    free: { name: 'Solar Sharer', start: 11, end: 14, cap: 24, scheme: 'SSO', supply: 1.851350, overRate: 0.141869,
+      // Peak 4pm–8pm working weekdays (blended 5/7 with the weekend off-peak rate); sponge 10–11am; off-peak otherwise
+      schedule: (m, h) => (h >= 16 && h < 20) ? (5 * 0.487482 + 2 * 0.375300) / 7 : (h === 10) ? 0.141869 : 0.375300 } },
+  ESSENTIAL: { state: 'NSW', label: 'Essential Energy', supply: 2.722168, flat: 0.350054,
+    free: { name: 'Solar Sharer', start: 11, end: 14, cap: 24, scheme: 'SSO', supply: 2.722168, overRate: 0.275958,
+      // Peak 7–10am and 3–10pm; off-peak 10–11am, 2–3pm, 10pm–7am
+      schedule: (m, h) => ((h >= 7 && h < 10) || (h >= 15 && h < 22)) ? 0.455698 : 0.275958 } },
+  ENERGEX: { state: 'QLD', label: 'Energex (SEQ)', supply: 1.920159, flat: 0.279744,
+    free: { name: 'Solar Sharer', start: 11, end: 14, cap: 24, scheme: 'SSO', supply: 1.778531, overRate: 0.081011,
+      // Peak 4–9pm; off-peak 2–4pm; shoulder 9pm–11am
+      schedule: (m, h) => (h >= 16 && h < 21) ? 0.489020 : (h >= 14 && h < 16) ? 0.081011 : 0.264119 } },
+  SAPN: { state: 'SA', label: 'SA Power Networks', supply: 1.800512, flat: 0.419103,
+    free: { name: 'Solar Sharer', start: 12, end: 15, cap: 24, scheme: 'SSO', supply: 1.800512, overRate: 0.196632,
+      // Peak 6–10am and 4pm–12am; off-peak 12–6am; solar sponge 10am–12pm and 3–4pm
+      schedule: (m, h) => ((h >= 6 && h < 10) || h >= 16) ? 0.588420 : (h < 6) ? 0.351708 : 0.196632 } }
+};
+
+// States without a regulated free-midday plan yet (flat only, state default rate).
+const OTHER_STATE_SUPPLY = { WA: 1.16, TAS: 1.30, NT: 0.78, ACT: 1.00, QLD: 1.25 };
+
+const NETWORKS_BY_STATE = {
+  VIC: ['POWERCOR', 'CITIPOWER', 'JEMENA', 'UNITED', 'AUSNET'],
+  NSW: ['AUSGRID', 'ENDEAVOUR', 'ESSENTIAL'],
+  QLD: ['ENERGEX'],
+  SA: ['SAPN']
+};
+
+// Rough postcode → distribution network. Editable in the UI; a wrong guess only shifts rates slightly.
+function postcodeToNetwork(pc) {
+  const n = parseInt(String(pc || '').padStart(4, '0'), 10);
+  if (isNaN(n)) return null;
+  // VIC
+  if (n >= 3000 && n <= 3999) {
+    if ((n >= 3000 && n <= 3010) || (n >= 3050 && n <= 3054) || (n >= 3065 && n <= 3068) ||
+        (n >= 3121 && n <= 3124) || (n >= 3141 && n <= 3144) || (n >= 3181 && n <= 3185) ||
+        (n >= 3205 && n <= 3207)) return 'CITIPOWER';
+    if ((n >= 3011 && n <= 3015) || (n >= 3032 && n <= 3049) || (n >= 3055 && n <= 3064) ||
+        (n >= 3070 && n <= 3074) || (n >= 3081 && n <= 3085)) return 'JEMENA';
+    if ((n >= 3016 && n <= 3031) || (n >= 3211 && n <= 3699)) return 'POWERCOR';
+    if ((n >= 3101 && n <= 3120) || (n >= 3125 && n <= 3140) || (n >= 3145 && n <= 3204) ||
+        (n >= 3910 && n <= 3944)) return 'UNITED';
+    return 'AUSNET';
+  }
+  // NSW
+  if (n >= 2000 && n <= 2999) {
+    if ((n >= 2600 && n <= 2618) || (n >= 2900 && n <= 2920)) return null; // ACT
+    if ((n >= 2000 && n <= 2139) || (n >= 2190 && n <= 2234) || (n >= 2250 && n <= 2330)) return 'AUSGRID';
+    if ((n >= 2140 && n <= 2189) || (n >= 2500 && n <= 2541) || (n >= 2555 && n <= 2574) ||
+        (n >= 2745 && n <= 2786)) return 'ENDEAVOUR';
+    return 'ESSENTIAL';
+  }
+  // QLD: south-east (Energex) — roughly Brisbane, Gold/Sunshine Coasts, Ipswich, Logan, Moreton
+  if (n >= 4000 && n <= 4999) {
+    if ((n >= 4000 && n <= 4306) || (n >= 4500 && n <= 4575)) return 'ENERGEX';
+    return null; // regional QLD (Ergon) — no Solar Sharer
+  }
+  if (n >= 5000 && n <= 5999) return 'SAPN';
+  return null;
+}
+
+// ---------- Battery rebate (Cheaper Home Batteries Program) ----------
+// STC factor per usable kWh, tiered by capacity (CER, from 1 May 2026). Steps down every Jan/Jul.
+const BATTERY_STC_SCHEDULE = [
+  { from: '2026-05-01', factor: 6.8 },
+  { from: '2027-01-01', factor: 5.7 },
+  { from: '2027-07-01', factor: 5.2 }
+];
+const BATTERY_TIERS = [ { upTo: 14, pct: 1.0 }, { upTo: 28, pct: 0.6 }, { upTo: 50, pct: 0.15 } ];
+
+function stcFactorOn(dateIso) {
+  let f = null;
+  for (const s of BATTERY_STC_SCHEDULE) if (dateIso >= s.from) f = s.factor;
+  return f;
+}
+function batteryStcs(usableKwh, factor) {
+  if (!usableKwh || !factor) return 0;
+  let remaining = Math.min(usableKwh, 50), prev = 0, stcs = 0;
+  for (const t of BATTERY_TIERS) {
+    const band = Math.max(0, Math.min(remaining, t.upTo - prev));
+    stcs += band * factor * t.pct;
+    remaining -= band; prev = t.upTo;
+    if (remaining <= 0) break;
+  }
+  return Math.floor(stcs);
+}
+// Returns { now, next: {date, amount, drop} | null }
+function batteryRebate(usableKwh, stcPrice, todayIso) {
+  const fNow = stcFactorOn(todayIso);
+  const now = batteryStcs(usableKwh, fNow) * stcPrice;
+  const upcoming = BATTERY_STC_SCHEDULE.find(s => s.from > todayIso);
+  let next = null;
+  if (upcoming) {
+    const amt = batteryStcs(usableKwh, upcoming.factor) * stcPrice;
+    next = { date: upcoming.from, amount: Math.round(amt), drop: Math.round(now - amt) };
+  }
+  return { now: Math.round(now), next };
+}
+
+// ---------- Finance (amortised loan, weekly) ----------
+function weeklyRepayment(principal, ratePa, years, weeklyFee, establishmentFee) {
+  if (!principal || principal <= 0) return 0;
+  const P = principal + (establishmentFee || 0);
+  const n = Math.round(years * 52);
+  const r = (ratePa || 0) / 52;
+  const base = r > 0 ? P * r / (1 - Math.pow(1 + r, -n)) : P / n;
+  return base + (weeklyFee || 0);
+}
+
+// ---------- Hourly shapes ----------
+// Solar noon (local standard time, decimal hours) by state; DST adds 1h Oct–Mar in DST states.
+const SOLAR_NOON_STD = { VIC: 12.35, NSW: 12.1, ACT: 12.2, TAS: 12.3, SA: 12.75, QLD: 11.9, WA: 12.3, NT: 12.6 };
+const DST_STATES = { VIC: 1, NSW: 1, ACT: 1, TAS: 1, SA: 1 };
+const STATE_LAT = { VIC: -37.8, NSW: -33.9, ACT: -35.3, TAS: -42.9, SA: -34.9, QLD: -27.5, WA: -31.9, NT: -12.5 };
+const MID_MONTH_DOY = [15, 46, 74, 105, 135, 166, 196, 227, 258, 288, 319, 349];
+const DAYS_IN_MONTH = [31, 28.25, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+function solarHourlyShape(month, lat, state) {
+  const doy = MID_MONTH_DOY[month];
+  const decl = 23.44 * Math.sin(2 * Math.PI * (284 + doy) / 365) * Math.PI / 180;
+  const latR = (lat != null ? lat : (STATE_LAT[state] || -33)) * Math.PI / 180;
+  const x = Math.max(-1, Math.min(1, -Math.tan(latR) * Math.tan(decl)));
+  const dayLen = 24 / Math.PI * Math.acos(x);
+  const dst = DST_STATES[state] && (month >= 9 || month <= 2) ? 1 : 0;
+  const noon = (SOLAR_NOON_STD[state] || 12.2) + dst;
+  const rise = noon - dayLen / 2;
+  const shape = new Array(24).fill(0);
+  let sum = 0;
+  for (let h = 0; h < 24; h++) {
+    let acc = 0;
+    for (let k = 0; k < 6; k++) {
+      const t = h + (k + 0.5) / 6;
+      const p = (t - rise) / dayLen;
+      if (p > 0 && p < 1) acc += Math.pow(Math.sin(Math.PI * p), 1.3);
+    }
+    shape[h] = acc; sum += acc;
+  }
+  return shape.map(v => v / sum);
+}
+
+// Typical Australian household load shape (occupants out during the day, evening peak).
+const LOAD_SHAPE_RAW = [2.5, 2.2, 2.0, 2.0, 2.1, 2.5, 3.5, 4.5, 4.5, 3.8, 3.4, 3.3,
+                        3.3, 3.2, 3.3, 3.8, 4.8, 6.5, 7.5, 7.5, 6.8, 5.8, 4.5, 3.3];
+const LOAD_SHAPE = (() => { const s = LOAD_SHAPE_RAW.reduce((a, b) => a + b, 0); return LOAD_SHAPE_RAW.map(v => v / s); })();
+
+// Seasonal household use (mean 1.0). Southern states heat in winter; northern states cool in summer.
+const LOAD_SEASON = {
+  south: [0.90, 0.90, 0.92, 0.98, 1.07, 1.17, 1.20, 1.14, 1.04, 0.97, 0.91, 0.90],
+  north: [1.12, 1.10, 1.03, 0.94, 0.93, 0.98, 1.00, 0.96, 0.92, 0.95, 1.00, 1.07]
+};
+function loadSeason(state) {
+  const arr = (state === 'QLD' || state === 'NT' || state === 'WA') ? LOAD_SEASON.north : LOAD_SEASON.south;
+  const mean = arr.reduce((a, b) => a + b, 0) / 12;
+  return arr.map(v => v / mean);
+}
+
+// Day-to-day weather: a fixed 10-day cycle of solar output factors (mean exactly 1.0),
+// including back-to-back cloudy days so the battery sometimes runs flat — as it does in real life.
+const WEATHER_CYCLE = [1.35, 1.25, 1.20, 0.35, 0.55, 1.30, 1.15, 0.60, 0.90, 1.35];
+// Household use on the same days (mean 1.0): grey, cold/wet days are also high-use days.
+const LOAD_WEATHER = [0.94, 0.95, 0.96, 1.14, 1.10, 0.95, 0.97, 1.08, 1.00, 0.91];
+const BATTERY_STANDBY_KWH_DAY = 0.3;   // inverter/BMS self-use
+function weatherCycle(month) {
+  // Winter months are more variable (deeper cloudy days)
+  const k = (month >= 4 && month <= 7) ? 1.25 : 1.0;
+  const raw = WEATHER_CYCLE.map(f => Math.max(0.12, 1 + (f - 1) * k));
+  const mean = raw.reduce((a, b) => a + b, 0) / raw.length;
+  return raw.map(f => f / mean);
+}
+
+// ---------- Plans ----------
+// Build a plan object: { key, kind:'flat'|'free', name, supply, rates[24], free:{start,end,cap,overRate}|null, fit }
+function buildPlans(networkKey, state, opts) {
+  opts = opts || {};
+  const fit = opts.fit;                       // $/kWh
+  const net = networkKey ? NETWORKS[networkKey] : null;
+  const flatRate = opts.flatRate != null ? opts.flatRate : (net ? net.flat : null);
+  const supply = opts.supply != null ? opts.supply : (net ? net.supply : (OTHER_STATE_SUPPLY[state] || 1.1));
+  const plans = [{
+    key: 'flat', kind: 'flat',
+    name: net ? (state === 'VIC' ? 'Flat rate (Victorian Default Offer)' : 'Flat rate (Default Market Offer)') : 'Flat rate',
+    supply, rates: new Array(24).fill(flatRate), free: null, fit
+  }];
+  if (net && net.free) {
+    const f = net.free, b = f.bands;
+    const rateAt = (m, h) => {
+      if (h >= f.start && h < f.end) return 0;
+      // VIC Midday Power Saver: Off-peak 9pm–11am · Free 11am–2pm · Solar soak 2pm–4pm · Peak 4pm–9pm
+      if (f.scheme === 'VIC_MPS') return (h >= 16 && h < 21) ? b.peak : (h >= 14 && h < 16) ? b.soak : b.offpeak;
+      return f.schedule(m, h);                 // Solar Sharer: per-network AER schedule
+    };
+    const monthRates = [];
+    for (let m = 0; m < 12; m++) { const row = []; for (let h = 0; h < 24; h++) row.push(rateAt(m, h)); monthRates.push(row); }
+    const overRate = f.scheme === 'VIC_MPS' ? b.soak : f.overRate;
+    plans.push({
+      key: 'free', kind: 'free', name: f.name,
+      supply: f.supply, rates: monthRates[0], monthRates, free: { start: f.start, end: f.end, cap: f.cap, overRate }, fit
+    });
+  }
+  return plans;
+}
+
+// ---------- Core simulation ----------
+// inputs: { monthlyGenKwh[12] (0s if no solar), annualLoadKwh, battery: {kwh, powerKw, rte} | null,
+//           lat, state, plan, gridChargeInFreeWindow (default true) }
+// returns { annualBill, importKwh, exportKwh, selfUsePct, freeKwh }
+function simulateYear(inp) {
+  const plan = inp.plan;
+  const bat = inp.battery && inp.battery.kwh > 0 ? inp.battery : null;
+  const cap = bat ? bat.kwh : 0;
+  const pmax = bat ? (bat.powerKw || 5) : 0;
+  const eta = bat ? Math.sqrt(bat.rte || 0.9) : 1;
+  const baseDailyLoad = inp.annualLoadKwh / 365;
+  const season = loadSeason(inp.state);
+  const gridCharge = inp.gridChargeInFreeWindow !== false;
+
+  let cost = 0, credit = 0, imp = 0, exp = 0, genTot = 0, freeTot = 0;
+  for (let m = 0; m < 12; m++) {
+    const days = DAYS_IN_MONTH[m];
+    const meanGen = (inp.monthlyGenKwh[m] || 0) / days;
+    const dailyLoad = baseDailyLoad * season[m];
+    const shape = meanGen > 0 ? solarHourlyShape(m, inp.lat, inp.state) : null;
+    const wx = weatherCycle(m);
+    let soc = cap * 0.3;
+    let mCost = 0, mCredit = 0, mImp = 0, mExp = 0, mFree = 0;
+    // Run the 10-day weather cycle 3×, keep the last pass (battery state has settled)
+    for (let pass = 0; pass < 3; pass++) {
+      mCost = 0; mCredit = 0; mImp = 0; mExp = 0; mFree = 0;
+      for (let d = 0; d < wx.length; d++) {
+        const dailyGen = meanGen * wx[d];
+        let freeUsed = 0;
+        for (let h = 0; h < 24; h++) {
+          const gen = shape ? dailyGen * shape[h] : 0;
+          const load = dailyLoad * LOAD_WEATHER[d] * LOAD_SHAPE[h] + (bat ? BATTERY_STANDBY_KWH_DAY / 24 : 0);
+          const inFree = !!(plan.free && h >= plan.free.start && h < plan.free.end);
+          const net = gen - load;
+          let gridIn = 0, gridOut = 0, solarChg = 0;
+          if (net >= 0) {
+            if (bat) { solarChg = Math.min(net, pmax, (cap - soc) / eta); soc += solarChg * eta; }
+            gridOut = net - solarChg;
+          } else {
+            const need = -net;
+            if (bat && !inFree) {
+              const dis = Math.min(need, pmax, soc * eta);
+              soc -= dis / eta;
+              gridIn = need - dis;
+            } else {
+              gridIn = need;                          // free window: run the house off free grid power
+            }
+          }
+          // Free window: top the battery up from free grid power (within the daily cap)
+          if (bat && inFree && gridCharge && soc < cap) {
+            const headroom = Math.max(0, plan.free.cap - freeUsed - gridIn);
+            const room = (cap - soc) / eta;
+            const g = Math.max(0, Math.min(room, headroom, pmax - solarChg));
+            soc += g * eta; gridIn += g;
+          }
+          // Price the hour
+          if (inFree) {
+            const freePart = Math.min(gridIn, Math.max(0, plan.free.cap - freeUsed));
+            freeUsed += freePart;
+            mCost += (gridIn - freePart) * plan.free.overRate;
+          } else {
+            mCost += gridIn * (plan.monthRates ? plan.monthRates[m][h] : plan.rates[h]);
+          }
+          mCredit += gridOut * plan.fit;
+          mImp += gridIn; mExp += gridOut;
+        }
+        mFree += freeUsed;
+      }
+    }
+    const scale = days / wx.length;
+    cost += mCost * scale; credit += mCredit * scale;
+    imp += mImp * scale; exp += mExp * scale; freeTot += mFree * scale;
+    genTot += (inp.monthlyGenKwh[m] || 0);
+  }
+  const annualBill = plan.supply * 365 + cost - credit;
+  return {
+    annualBill,
+    importKwh: imp, exportKwh: exp, freeKwh: freeTot,
+    selfUsePct: genTot > 0 ? Math.max(0, Math.min(1, (genTot - exp) / genTot)) : 0
+  };
+}
+
+// Back out annual consumption from a quarterly bill.
+// If existingGen is given (Add-battery mode), the bill already reflects that solar, so solve by bisection.
+function consumptionFromBill(quarterlyBill, plan, monthlyGenKwh, lat, state) {
+  const annualBill = quarterlyBill * 4;
+  const hasGen = monthlyGenKwh && monthlyGenKwh.some(v => v > 0);
+  if (!hasGen) {
+    const usage = (annualBill - plan.supply * 365) / plan.rates[0];
+    return Math.max(1000, usage);
+  }
+  let lo = 500, hi = 60000;
+  for (let i = 0; i < 40; i++) {
+    const mid = (lo + hi) / 2;
+    const b = simulateYear({ monthlyGenKwh, annualLoadKwh: mid, battery: null, lat, state, plan }).annualBill;
+    if (b < annualBill) lo = mid; else hi = mid;
+  }
+  return Math.max(1000, (lo + hi) / 2);
+}
+
+// Common product sizes for recommendations
+const SOLAR_SIZES = [6.6, 8, 10, 13.2, 15, 20];
+const BATTERY_SIZES = [10, 13.5, 16, 20, 25, 32, 40];
+function nearestUp(list, v) { for (const s of list) if (s >= v - 0.05) return s; return list[list.length - 1]; }
+
+function recommendSolarKw(annualLoadKwh, yieldPerKw, withBattery) {
+  const target = annualLoadKwh * (withBattery ? 1.4 : 1.1) / yieldPerKw;
+  return nearestUp(SOLAR_SIZES, Math.max(6.6, target));
+}
+function recommendBatteryKwh(annualLoadKwh) {
+  // Cover the evening + overnight share of an average day (~70% of daily load)
+  return nearestUp(BATTERY_SIZES, Math.max(10, annualLoadKwh / 365 * 0.7));
+}
+
+// Approximate state-capital coordinates — offline fallback when geocoding is unavailable
+const STATE_LON = { VIC: 144.96, NSW: 151.2, ACT: 149.13, TAS: 147.33, SA: 138.6, QLD: 153.03, WA: 115.86, NT: 130.84 };
+
 /* ---------- 2. Geocoding (Australia-restricted) ---------- */
 
 async function geocode(query) {
@@ -1616,6 +2205,29 @@ async function geocode(query) {
     }
   } catch (e) { /* fall through */ }
 
+  return null;
+}
+
+// Reverse lookup: coordinates → postcode (Nominatim, then Photon). Returns null if neither answers.
+async function reverseGeocodePostcode(lat, lon) {
+  if (lat == null || lon == null) return null;
+  try {
+    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`, { headers: { 'Accept': 'application/json' } });
+    if (res.ok) {
+      const d = await res.json();
+      if (d && d.address && d.address.postcode) return String(d.address.postcode).trim();
+    }
+  } catch (e) { /* fall through */ }
+  try {
+    const res = await fetch(`https://photon.komoot.io/reverse?lat=${lat}&lon=${lon}&limit=1`);
+    if (res.ok) {
+      const d = await res.json();
+      const f = d && d.features && d.features[0];
+      if (f && f.properties && f.properties.postcode && (!f.properties.countrycode || f.properties.countrycode.toLowerCase() === 'au')) {
+        return String(f.properties.postcode).trim();
+      }
+    }
+  } catch (e) { /* fall through */ }
   return null;
 }
 
@@ -1767,6 +2379,7 @@ function calculate(systemKw, postcode, lat, lon, nasaData, overrides) {
 /* ---------- 5. Rendering ---------- */
 
 let chart = null;
+let chartPending = null;
 let currentResult = null;
 
 function animateNumber(el, from, to, duration = 800) {
@@ -1788,7 +2401,11 @@ function renderResults(r) {
   currentResult = r;
 
   const today = new Date().toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' });
-  const sizeStr = `${r.systemKw} kW`;
+  const d = r.deal;
+  const recTag = (on) => on ? ' (recommended)' : '';
+  const sizeStr = d.mode === 'solar' ? `${r.systemKw} kW${recTag(d.solarAuto)}`
+    : d.mode === 'addBattery' ? `${d.batKwh} kWh battery${recTag(d.batAuto)} + existing ${r.systemKw} kW solar`
+    : `${r.systemKw} kW${recTag(d.solarAuto)} + ${d.batKwh} kWh battery${recTag(d.batAuto)}`;
   const stateLabel = STATE_NAMES[r.state] || r.state;
 
   // Meta strips (both top and bottom)
@@ -1801,7 +2418,12 @@ function renderResults(r) {
 
   // Hero — lead with kWh production (v1.4: production-first hierarchy)
   const heroKwhEl = document.getElementById('heroGenKwh');
-  animateNumber(heroKwhEl, 0, r.annualKwh);
+  if (r.__fromOverride) heroKwhEl.textContent = r.annualKwh.toLocaleString('en-AU');
+  else animateNumber(heroKwhEl, 0, r.annualKwh);
+  document.getElementById('heroKwhLabel').textContent =
+    d.mode === 'addBattery' ? 'Your solar already makes / year' : d.mode === 'solarBattery' ? 'Solar production / year' : 'Average annual production';
+  document.getElementById('heroBillLead').textContent =
+    d.mode === 'addBattery' ? 'The battery cuts the bill by a further' : d.mode === 'solarBattery' ? 'Solar + battery cut the bill by' : 'Reduces your bill by';
   // Bill savings becomes secondary subtitle — no animation, just set text
   document.getElementById('heroSavings').textContent = r.annualSavings.toLocaleString('en-AU');
   document.getElementById('heroPayback').textContent = r.paybackYears != null ? `~${r.paybackYears} yrs` : '—';
@@ -1809,14 +2431,18 @@ function renderResults(r) {
   // Showing "~285%" reads as a math glitch and undermines trust; the kWh + $ already make the size point.
   const coverageSep = document.getElementById('coverageSep');
   const coveragePhrase = document.getElementById('coveragePhrase');
-  if (r.coveragePct > 100) {
-    if (coverageSep) coverageSep.style.display = 'none';
-    if (coveragePhrase) coveragePhrase.style.display = 'none';
+  if (d.batKwh) {
+    // Battery modes: self-sufficiency is the meaningful number
+    coverageSep.style.display = ''; coveragePhrase.style.display = '';
+    coveragePhrase.innerHTML = `<strong>~${Math.round(d.selfSufficiency * 100)}%</strong> of the home runs on sun`;
   } else {
-    if (coverageSep) coverageSep.style.display = '';
-    if (coveragePhrase) coveragePhrase.style.display = '';
-    document.getElementById('coveragePct').textContent = `~${r.coveragePct}%`;
-    document.getElementById('stateName').textContent = stateLabel;
+    const cov = Math.round(d.genAnnual / d.load * 100);
+    if (cov > 100) {
+      coverageSep.style.display = 'none'; coveragePhrase.style.display = 'none';
+    } else {
+      coverageSep.style.display = ''; coveragePhrase.style.display = '';
+      coveragePhrase.innerHTML = `covers <strong>~${cov}%</strong> of ${d.hasBill ? 'their usage' : 'an avg ' + escapeHtml(stateLabel) + ' home'}`;
+    }
   }
 
   // Seasonal cards
@@ -1858,24 +2484,30 @@ function renderResults(r) {
     diff > 0 ? `+${diff}% larger` : `${diff}% smaller`;
   document.getElementById('vsAvg').textContent = vsAvgText;
 
+  // v2: money story + plan
+  renderDeal(d);
+  renderPlans(d);
+
   // Pricing assumptions panel
   renderPricingPanel(r);
 
-  // Compare panel
-  renderComparePanel(r);
+  // Compare panel (solar sizes — not relevant when adding a battery to existing solar)
+  document.getElementById('comparePanel').style.display = d.mode === 'addBattery' ? 'none' : '';
+  if (d.mode !== 'addBattery') renderComparePanel(r);
 
   // Customer name banner
   renderNameBanner();
 
-  // Chart
-  renderChart(r.monthlyKwh);
+  // Chart (lives in the collapsed section — render now if open, otherwise when opened)
+  chartPending = r.monthlyKwh;
+  if (document.getElementById('moreDetails').open) { renderChart(chartPending); chartPending = null; }
 
   // Save to recents (only on first render of this calc, not on override-recalc)
   if (!r.__fromOverride) saveToRecents(r);
 
   // Show results
   document.getElementById('results').classList.add('show');
-  document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  if (!r.__fromOverride) document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function renderChart(monthlyKwh) {
@@ -2001,19 +2633,39 @@ async function handleCalculate() {
 
   const sizeRaw = document.getElementById('size').value.trim();
   const locationRaw = document.getElementById('location').value.trim();
+  const billRaw = document.getElementById('bill').value.trim();
+  const batRaw = document.getElementById('battery').value.trim();
+  const mode = currentMode;
 
-  if (!sizeRaw || isNaN(parseFloat(sizeRaw)) || parseFloat(sizeRaw) <= 0) {
+  const bill = billRaw ? parseFloat(billRaw) : null;
+  if (billRaw && (isNaN(bill) || bill < 50 || bill > 20000)) {
+    showError('Quarterly bill looks off — enter the dollar amount of one quarterly bill (e.g. 650).');
+    return;
+  }
+  let sizeKw = sizeRaw ? parseFloat(sizeRaw) : null;
+  if (sizeRaw && (isNaN(sizeKw) || sizeKw <= 0)) {
     showError('Please enter a valid system size in kW.');
+    return;
+  }
+  if (mode === 'addBattery' && !sizeKw) {
+    showError('Enter the size of their existing solar system (kW).');
+    return;
+  }
+  if (mode !== 'addBattery' && !sizeKw && !bill) {
+    showError('Enter a solar size — or their quarterly bill and we\'ll recommend one.');
+    return;
+  }
+  if (sizeKw && sizeKw > 1000) {
+    showError('System size seems too large — please check the value.');
+    return;
+  }
+  const batteryKwh = batRaw ? parseFloat(batRaw) : null;
+  if (batRaw && (isNaN(batteryKwh) || batteryKwh <= 0 || batteryKwh > 100)) {
+    showError('Battery size should be the usable capacity in kWh (e.g. 13.5).');
     return;
   }
   if (!locationRaw) {
     showError('Please enter a location (postcode, suburb, or address).');
-    return;
-  }
-
-  const sizeKw = parseFloat(sizeRaw);
-  if (sizeKw > 1000) {
-    showError('System size seems too large — please check the value.');
     return;
   }
 
@@ -2028,13 +2680,22 @@ async function handleCalculate() {
     setBusy(false);
   }
 
+  // Offline fallback: a bare postcode still works if the geocoders are down or rate-limited
+  if (!geo) {
+    const pc = normalizePostcode(locationRaw);
+    const st = pc ? postcodeToState(pc) : null;
+    if (st) {
+      geo = { lat: STATE_LAT[st], lon: STATE_LON[st], display: `Postcode ${pc}, ${st}`, postcode: pc, source: 'postcode-fallback' };
+    }
+  }
+
   if (!geo) {
     showError('Couldn\'t find that location in Australia. Try a postcode (e.g. 3029), a suburb name, or a full address.');
     return;
   }
 
   // Show confirm step
-  pendingGeocode = { sizeKw, geo };
+  pendingGeocode = { sizeKw, geo, mode, bill, batteryKwh };
   const confirmCard = document.getElementById('confirmCard');
   document.getElementById('confirmMatched').textContent = geo.display;
   confirmCard.classList.add('show');
@@ -2043,13 +2704,19 @@ async function handleCalculate() {
 
 async function runCalculation() {
   if (busy || !pendingGeocode) return;
-  const { sizeKw, geo } = pendingGeocode;
+  const { sizeKw, geo, mode, bill, batteryKwh } = pendingGeocode;
   document.getElementById('confirmCard').classList.remove('show');
 
   // Determine postcode: prefer structured field from geocoder, fall back to text extraction
   let postcode = normalizePostcode(geo.postcode);
   if (!postcode) postcode = normalizePostcode(extractPostcodeFromText(geo.display));
   if (!postcode) postcode = normalizePostcode(extractPostcodeFromText(document.getElementById('location').value));
+  // Suburb-level matches (e.g. "Point Cook") often carry no postcode — look it up from the coordinates
+  if (!postcode) {
+    setBusy(true); setShimmer(true);
+    try { postcode = normalizePostcode(await reverseGeocodePostcode(geo.lat, geo.lon)); }
+    finally { setShimmer(false); setBusy(false); }
+  }
   if (!postcode) {
     showError('Couldn\'t determine the postcode from that location. Try entering a 4-digit postcode directly.');
     setBusy(false);
@@ -2066,12 +2733,17 @@ async function runCalculation() {
 
   try {
     // Cache inputs for live recalc when pricing assumptions change
-    lastCalcInputs = { sizeKw, postcode, lat: geo.lat, lon: geo.lon, nasaData, locationDisplay: geo.display };
-    pricingOverrides = {}; // reset overrides on a new calc
-    const result = calculate(sizeKw, postcode, geo.lat, geo.lon, nasaData);
-    result.locationDisplay = geo.display;
-    renderResults(result);
+    const state = postcodeToState(postcode) || 'NSW';
+    lastCalcInputs = {
+      sizeKw, postcode, state, lat: geo.lat, lon: geo.lon, nasaData, locationDisplay: geo.display,
+      mode, bill, batteryKwh, networkKey: postcodeToNetwork(postcode)
+    };
+    pricingOverrides = {}; // reset per-customer overrides on a new calc
+    compareSizes = [6.6, 10, 13.2];
+    compareInstallOverrides = [null, null, null];
+    renderResults(computeAll());
   } catch (e) {
+    console.error(e);
     showError('Something went wrong while calculating. Please try again.');
   } finally {
     setBusy(false);
@@ -2083,54 +2755,317 @@ async function runCalculation() {
 let lastCalcInputs = null;
 let pricingOverrides = {};
 
+/* ---------- v2: deal engine glue ---------- */
+
+// Business settings — remembered on this device across customers
+const SETTINGS_KEY = 'whatifsolar_settings_v2';
+const SETTINGS_DEFAULTS = {
+  batteryPerKwh: 1000,     // installed $ per usable kWh, before the federal rebate
+  stcPrice: 38,            // $ per STC
+  loanRate: 0.0949,        // green-loan headline rate (Brighte Green Loan "from", 2026)
+  loanYears: 7,
+  loanWeeklyFee: 2.70,     // account-keeping fee per week
+  loanEstab: 199           // establishment fee, added to the loan
+};
+function getSettings() {
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}') || {}; } catch (e) { saved = {}; }
+  return Object.assign({}, SETTINGS_DEFAULTS, saved);
+}
+function saveSetting(key, value) {
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}') || {}; } catch (e) { saved = {}; }
+  saved[key] = value;
+  try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(saved)); } catch (e) { /* ignore */ }
+}
+
+function todayIso() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+// Monthly kWh per installed kW (unrounded) — same physics as calculate()
+function monthlyGenPerKw(ctx) {
+  if (ctx.nasaData) {
+    const days = [31, 28.25, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    return ctx.nasaData.monthly.map((psh, i) => psh * PERFORMANCE_RATIO * days[i]);
+  }
+  const annual = CER_ZONE_BASELINE_KWH_PER_KW_YEAR[postcodeToCerZone(ctx.postcode)];
+  return MONTHLY_FRACTIONS.map(f => annual * f);
+}
+
+function computeDeal(ctx, opts) {
+  opts = opts || {};
+  const s = getSettings();
+  const state = ctx.state;
+  const netKey = ctx.networkKey && NETWORKS[ctx.networkKey] && NETWORKS[ctx.networkKey].state === state ? ctx.networkKey : null;
+  const net = netKey ? NETWORKS[netKey] : null;
+  const fitC = pricingOverrides.fitRate != null ? pricingOverrides.fitRate : STATE_FIT_MID[state];
+  // Regional QLD (Ergon): uniform tariff policy keeps prices in line with SEQ — use Energex flat rates as proxy
+  const proxy = !net && state === 'QLD' ? NETWORKS.ENERGEX : null;
+  const flatC = pricingOverrides.retailRate != null ? pricingOverrides.retailRate
+    : (net ? net.flat * 100 : proxy ? proxy.flat * 100 : STATE_RETAIL_RATE[state]);
+  const plans = buildPlans(netKey, state, { fit: fitC / 100, flatRate: flatC / 100, supply: proxy ? proxy.supply : undefined });
+  // A custom usage rate (their retailer is dearer/cheaper than the reference) scales every plan's rates alike
+  if (pricingOverrides.retailRate != null && net) {
+    const k = (pricingOverrides.retailRate / 100) / net.flat;
+    plans.forEach(p => {
+      if (p.kind !== 'free') return;
+      p.monthRates = p.monthRates.map(row => row.map(r => r * k));
+      p.rates = p.monthRates[0]; p.free.overRate *= k;
+    });
+  }
+  if (pricingOverrides.supply != null) plans.forEach(p => { p.supply = pricingOverrides.supply; });
+  const flat = plans[0];
+
+  const mode = ctx.mode;
+  const perKw = monthlyGenPerKw(ctx);
+  const yieldPerKw = perKw.reduce((a, b) => a + b, 0);
+  const zeros = new Array(12).fill(0);
+  const existingKw = mode === 'addBattery' ? ctx.sizeKw : 0;
+  const existingGen = perKw.map(v => v * existingKw);
+
+  // Household consumption — from their bill when we have it
+  const hasBill = ctx.bill > 0;
+  const load = hasBill
+    ? consumptionFromBill(ctx.bill, flat, mode === 'addBattery' ? existingGen : null, ctx.lat, state)
+    : STATE_CONSUMPTION[state];
+
+  // System sizes (recommend when left blank)
+  const sizeIn = opts.sizeKw != null ? opts.sizeKw : ctx.sizeKw;
+  const solarKw = mode === 'addBattery' ? existingKw : (sizeIn || recommendSolarKw(load, yieldPerKw, mode === 'solarBattery'));
+  const solarAuto = mode !== 'addBattery' && !sizeIn;
+  const batKwh = mode === 'solar' ? 0 : (ctx.batteryKwh || recommendBatteryKwh(load));
+  const batAuto = mode !== 'solar' && !ctx.batteryKwh;
+  const gen = perKw.map(v => v * solarKw);
+  const battery = batKwh > 0 ? { kwh: batKwh, powerKw: Math.min(10, Math.max(5, batKwh * 0.4)), rte: 0.9 } : null;
+
+  // Before = today's situation on a standard flat plan
+  const before = simulateYear({ monthlyGenKwh: mode === 'addBattery' ? existingGen : zeros, annualLoadKwh: load, battery: null, lat: ctx.lat, state, plan: flat });
+  // Show their bill as entered — unless usage hit a model limit, then show the modelled bill so before/after/saving agree
+  const beforeAnnual = hasBill && Math.abs(before.annualBill - ctx.bill * 4) <= Math.max(8, ctx.bill * 4 * 0.02)
+    ? ctx.bill * 4 : before.annualBill;
+  const results = plans.map(p => ({ plan: p, sim: simulateYear({ monthlyGenKwh: gen, annualLoadKwh: load, battery, lat: ctx.lat, state, plan: p }) }));
+  let best = results[0];
+  results.forEach(r => { if (r.sim.annualBill < best.sim.annualBill) best = r; });
+  const annualSaving = Math.max(0, before.annualBill - best.sim.annualBill);
+
+  // Price
+  const installOverride = opts.installCost != null ? opts.installCost : pricingOverrides.installCost;
+  const solarCost = mode === 'addBattery' ? 0 : (installOverride != null ? installOverride : defaultInstallCost(solarKw));
+  const rebate = batKwh ? batteryRebate(batKwh, s.stcPrice, todayIso()) : { now: 0, next: null };
+  const batGross = batKwh * s.batteryPerKwh;
+  const batNet = Math.max(0, batGross - rebate.now);
+  const total = solarCost + batNet;
+
+  // Finance
+  const weeklyRepay = weeklyRepayment(total, s.loanRate, s.loanYears, s.loanWeeklyFee, s.loanEstab);
+  const weeklySave = annualSaving / 52;
+  const flatSim = results[0].sim;
+
+  return {
+    mode, state, netKey, plans, results, best, flat,
+    hasBill, load, solarKw, solarAuto, batKwh, batAuto, genAnnual: solarKw * yieldPerKw,
+    beforeAnnual, afterAnnual: best.sim.annualBill, annualSaving,
+    selfSufficiency: Math.max(0, Math.min(1, 1 - flatSim.importKwh / load)),
+    solarCost, batGross, batNet, rebate, total,
+    weeklySave, weeklyRepay, weeklyNet: weeklySave - weeklyRepay,
+    paybackYears: annualSaving > 0 ? total / annualSaving : null,
+    flatRateC: flatC, fitC, supply: flat.supply, settings: s
+  };
+}
+
+// Run the deal model, then the production model for the chosen solar size
+function computeAll() {
+  const c = lastCalcInputs;
+  const deal = computeDeal(c);
+  const r = calculate(deal.solarKw || 0.0001, c.postcode, c.lat, c.lon, c.nasaData);
+  r.systemKw = Math.round(deal.solarKw * 100) / 100;
+  r.locationDisplay = c.locationDisplay;
+  r.deal = deal;
+  r.annualSavings = Math.round(deal.annualSaving);
+  r.paybackYears = deal.paybackYears != null ? Math.round(deal.paybackYears * 10) / 10 : null;
+  r.installCost = Math.round(deal.total);
+  return r;
+}
+
 function recalcWithOverrides() {
   if (!lastCalcInputs) return;
-  const { sizeKw, postcode, lat, lon, nasaData, locationDisplay } = lastCalcInputs;
-  const result = calculate(sizeKw, postcode, lat, lon, nasaData, pricingOverrides);
-  result.locationDisplay = locationDisplay;
+  const result = computeAll();
   result.__fromOverride = true;
   renderResults(result);
 }
 
+const fmt$ = (v) => '$' + Math.round(v).toLocaleString('en-AU');
+function fmtHour(h) { const hh = ((h + 11) % 12) + 1; return `${hh}${h < 12 || h === 24 ? 'am' : 'pm'}`; }
+function fmtDateLong(iso) {
+  const [y, m, d] = iso.split('-').map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+function sizesLabel(d) {
+  if (d.mode === 'solar') return `${d.solarKw} kW solar`;
+  if (d.mode === 'addBattery') return `${d.batKwh} kWh battery`;
+  return `${d.solarKw} kW solar + ${d.batKwh} kWh battery`;
+}
+
+function renderDeal(d) {
+  const name = getCustomerName();
+  const stateLabel = STATE_NAMES[d.state] || d.state;
+  document.getElementById('dealBillLabel').textContent = d.hasBill
+    ? (name ? `${name}'s power bill` : 'Your power bill')
+    : `Typical ${stateLabel} home — power bill`;
+  const toQ = d.afterAnnual / 4;
+  document.getElementById('dealBillFrom').textContent = fmt$(d.beforeAnnual / 4);
+  document.getElementById('dealBillTo').textContent = toQ < 0 ? '$0' : fmt$(toQ);
+  const planName = d.best.plan.name;
+  let sub = d.best.plan.kind === 'flat'
+    ? `${sizesLabel(d)} · on a <strong>flat-rate</strong> plan`
+    : `${sizesLabel(d)} · on the <strong>${escapeHtml(planName)}</strong> plan`;
+  if (toQ < 0) sub += ` · ~${fmt$(-toQ)}/qtr in credit`;
+  document.getElementById('dealBillSub').innerHTML = sub;
+
+  document.getElementById('dealSaveWk').textContent = fmt$(d.weeklySave);
+  document.getElementById('dealRepayWk').textContent = fmt$(d.weeklyRepay);
+  document.getElementById('dealRepaySub').textContent = `${d.settings.loanYears} yrs @ ${(d.settings.loanRate * 100).toFixed(2)}%`;
+  const netEl = document.getElementById('dealNetWk');
+  const netTile = document.getElementById('dealNetTile');
+  const netRounded = Math.round(d.weeklyNet);
+  const netK = netTile.querySelector('.k');
+  if (netRounded >= 0) {
+    netK.textContent = 'Net';
+    netEl.textContent = '+' + fmt$(netRounded);
+  } else {
+    netK.textContent = 'Real cost';
+    netEl.textContent = fmt$(-netRounded);
+  }
+  netTile.classList.toggle('good', netRounded >= 0);
+  netTile.classList.toggle('warn', netRounded < 0);
+  const yrs = d.settings.loanYears;
+  document.getElementById('dealVerdict').textContent = netRounded >= 0
+    ? `✓ Cash-positive from week one — then the full ${fmt$(d.weeklySave)}/week is theirs after ${yrs} years`
+    : `Effectively ${fmt$(-netRounded)}/week for ${yrs} years — then ${fmt$(d.weeklySave)}/week back in their pocket`;
+
+  let price;
+  if (d.mode === 'solar') price = `Total <strong>${fmt$(d.total)}</strong> after STCs`;
+  else if (d.mode === 'addBattery') price = `Battery <strong>${fmt$(d.batNet)}</strong> after the <strong>${fmt$(d.rebate.now)}</strong> federal battery rebate`;
+  else price = `Total <strong>${fmt$(d.total)}</strong> · solar ${fmt$(d.solarCost)} + battery ${fmt$(d.batNet)} after the <strong>${fmt$(d.rebate.now)}</strong> federal rebate`;
+  document.getElementById('dealPrice').innerHTML = price;
+
+  const urg = document.getElementById('dealUrgency');
+  urg.textContent = '';
+  if (d.batKwh && d.rebate.next && d.rebate.next.drop > 0) {
+    const daysLeft = Math.round((new Date(d.rebate.next.date) - new Date(todayIso())) / 86400000);
+    if (daysLeft <= 200) urg.textContent = `⏳ Rebate drops ${fmt$(d.rebate.next.drop)} on ${fmtDateLong(d.rebate.next.date)}`;
+  }
+}
+
+function renderPlans(d) {
+  // Network selector
+  const sel = document.getElementById('networkSelect');
+  const wrap = document.getElementById('plansNetWrap');
+  const keys = NETWORKS_BY_STATE[d.state] || [];
+  if (keys.length) {
+    wrap.style.display = '';
+    sel.innerHTML = keys.map(k => `<option value="${k}"${k === d.netKey ? ' selected' : ''}>${escapeHtml(NETWORKS[k].label)}</option>`).join('')
+      + ((!d.netKey || d.state === 'QLD') ? `<option value=""${d.netKey ? '' : ' selected'}>Other / regional</option>` : '');
+    document.getElementById('networkText').textContent = d.netKey ? NETWORKS[d.netKey].label : 'Regional';
+  } else {
+    wrap.style.display = 'none';
+  }
+
+  const rowsEl = document.getElementById('planRows');
+  const multi = d.results.length > 1;
+  rowsEl.innerHTML = d.results.map(r => {
+    const p = r.plan;
+    const isBest = multi && r === d.best;
+    let desc;
+    if (p.kind === 'free') {
+      const peak = Math.max(...(p.monthRates || [p.rates]).map(row => Math.max(...row)));
+      desc = `Free ${fmtHour(p.free.start)}–${fmtHour(p.free.end)} (up to ${p.free.cap} kWh/day) · evening peak ${(peak * 100).toFixed(1)}¢`;
+    } else {
+      desc = `${(p.rates[0] * 100).toFixed(1)}¢/kWh all day`;
+    }
+    const q = r.sim.annualBill / 4;
+    return `<div class="plan-row${isBest ? ' best' : ''}">
+      <div class="plan-name">${escapeHtml(p.name)}${isBest ? '<span class="badge">Best</span>' : ''}</div>
+      <div class="plan-desc">${desc}</div>
+      <div class="plan-bill">${q < 0 ? '$0' : fmt$(q)}<small>per quarter</small></div>
+    </div>`;
+  }).join('');
+
+  const tipEl = document.getElementById('planTip');
+  if (multi) {
+    const other = d.results.find(r => r !== d.best);
+    const diff = Math.round(other.sim.annualBill - d.best.sim.annualBill);
+    const fp = d.results.find(r => r.plan.kind === 'free').plan;
+    const win = `${fmtHour(fp.free.start)}–${fmtHour(fp.free.end)}`;
+    if (d.best.plan.kind === 'free' && d.batKwh) {
+      tipEl.innerHTML = `<strong>Switch to ${escapeHtml(fp.name)}</strong> — the battery tops up on free power ${win} on cloudy days, then runs the house through the evening peak. About ${fmt$(diff)}/yr better than a flat plan.`;
+    } else if (d.best.plan.kind === 'free') {
+      tipEl.innerHTML = `<strong>Switch to ${escapeHtml(fp.name)}</strong> — run the washer, dishwasher and hot water ${win} for free. About ${fmt$(diff)}/yr better than a flat plan.`;
+    } else {
+      tipEl.innerHTML = `<strong>Stay on a flat-rate plan</strong> — for this setup, ${escapeHtml(fp.name)}'s higher evening rates cost more than the free hours save (by about ${fmt$(diff)}/yr).`;
+    }
+  } else {
+    tipEl.innerHTML = 'No regulated free-midday plan in this area yet — modelled on a standard flat-rate plan.';
+  }
+  const compareSite = d.state === 'VIC' ? 'Victorian Energy Compare' : 'Energy Made Easy';
+  const optIn = d.state === 'VIC' ? 'Midday Power Saver is opt-in with the retailer from 1 Oct 2026.' : (multi ? 'Solar Sharer is opt-in with the retailer (needs a smart meter).' : '');
+  document.getElementById('planFoot').textContent =
+    `${optIn} Bills include supply charges and a ${d.fitC.toFixed(1)}¢ feed-in tariff. Compare offers at ${compareSite}.`.trim();
+}
+
 function renderPricingPanel(r) {
+  const d = r.deal;
+  const s = d.settings;
   const fmtCents = (v) => `${(Math.round(v * 10) / 10).toFixed(1)}¢`;
-  const fmtPct = (v) => `${Math.round(v * 100)}%`;
-  const fmtMoney = (v) => `$${v.toLocaleString('en-AU')}`;
-  document.getElementById('editRetail').textContent = fmtCents(r.retailRate);
-  document.getElementById('editFit').textContent = fmtCents(r.fitRate);
-  document.getElementById('editSelf').textContent = fmtPct(r.selfConsumption);
-  document.getElementById('editInstall').textContent = fmtMoney(r.installCost);
-  // mark "changed" if user overrode it
-  ['retailRate','fitRate','selfConsumption','installCost'].forEach(k => {
-    const id = { retailRate:'editRetail', fitRate:'editFit', selfConsumption:'editSelf', installCost:'editInstall' }[k];
-    const el = document.getElementById(id);
-    if (el) el.classList.toggle('changed', pricingOverrides[k] != null);
-  });
+  document.getElementById('editRetail').textContent = fmtCents(d.flatRateC);
+  document.getElementById('editFit').textContent = fmtCents(d.fitC);
+  document.getElementById('editSupply').textContent = `$${d.supply.toFixed(2)}/day`;
+  document.getElementById('editInstall').textContent = fmt$(d.solarCost);
+  document.getElementById('editBatteryPerKwh').textContent = fmt$(s.batteryPerKwh);
+  document.getElementById('editStc').textContent = `$${s.stcPrice}`;
+  document.getElementById('editLoanRate').textContent = `${(s.loanRate * 100).toFixed(2)}%`;
+  document.getElementById('editLoanYears').textContent = `${s.loanYears} yrs`;
+  document.getElementById('cellInstall').classList.toggle('is-hidden', d.mode === 'addBattery');
+  const noBat = d.mode === 'solar';
+  document.getElementById('cellBatteryPrice').classList.toggle('is-hidden', noBat);
+  document.getElementById('cellStc').classList.toggle('is-hidden', noBat);
+  // Per-customer overrides in accent colour; remembered settings in accent when they differ from defaults
+  const overrideIds = { retailRate: 'editRetail', fitRate: 'editFit', supply: 'editSupply', installCost: 'editInstall' };
+  Object.keys(overrideIds).forEach(k => document.getElementById(overrideIds[k]).classList.toggle('changed', pricingOverrides[k] != null));
+  const settingIds = { batteryPerKwh: 'editBatteryPerKwh', stcPrice: 'editStc', loanRate: 'editLoanRate', loanYears: 'editLoanYears' };
+  Object.keys(settingIds).forEach(k => document.getElementById(settingIds[k]).classList.toggle('changed', s[k] !== SETTINGS_DEFAULTS[k]));
 }
 
 function parsePricingValue(field, raw) {
-  // Strip everything except digits, dot, percent — accept "28c", "28¢", "$8800", "30%"
+  // Strip everything except digits and dot — accept "28c", "28¢", "$8800", "9.49%", "7 yrs"
   if (raw == null) return null;
-  const s = String(raw).trim();
+  const s = String(raw).replace(/,/g, '').trim();
   const m = s.match(/-?\d+(\.\d+)?/);
   if (!m) return null;
   let n = parseFloat(m[0]);
   if (isNaN(n)) return null;
-  if (field === 'selfConsumption') {
-    // Accept either "30" or "0.3" — both meaning 30%
-    if (n > 1) n = n / 100;
-    if (n < 0) n = 0;
-    if (n > 1) n = 1;
+  const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+  const hasPct = /%/.test(s);
+  switch (field) {
+    case 'retailRate':                        // cents; "$0.28" or "0.28" means dollars
+      if (n > 0 && n < 1) n = n * 100;
+      return clamp(n, 5, 200);
+    case 'fitRate':
+      if (n > 0 && n < 1 && /\$/.test(s)) n = n * 100;
+      return clamp(n, 0, 100);
+    case 'supply':                            // $/day; "138" or "138c" means cents
+      if (n > 5) n = n / 100;
+      return clamp(n, 0, 5);
+    case 'installCost': return clamp(n, 0, 1000000);
+    case 'batteryPerKwh': return clamp(n, 100, 5000);
+    case 'stcPrice': return clamp(n, 0, 100);
+    case 'loanRate':                          // "9.49", "9.49%", "1" → percent; "0.0949" → fraction
+      return clamp(hasPct || n >= 1 ? n / 100 : n, 0, 0.3);
+    case 'loanYears': return clamp(Math.round(n), 1, 15);
+    default: return n;
   }
-  if (field === 'retailRate' || field === 'fitRate') {
-    if (n < 0) n = 0;
-    if (n > 200) n = 200;
-  }
-  if (field === 'installCost') {
-    if (n < 0) n = 0;
-    if (n > 1000000) n = 1000000;
-  }
-  return n;
 }
 
 // ----- Compare panel (3 sizes side-by-side) -----
@@ -2140,15 +3075,18 @@ let compareInstallOverrides = [null, null, null];
 
 function calcForCompare(sizeKw, idx) {
   if (!lastCalcInputs) return null;
-  const { postcode, lat, lon, nasaData } = lastCalcInputs;
-  // Compare cards use SAME rate/FIT/self-consumption overrides as main result.
-  // Install cost is per-card: defaults to the size-derived preset, or uses the user's per-card override.
-  const overrides = Object.assign({}, pricingOverrides);
-  delete overrides.installCost;
-  if (idx != null && compareInstallOverrides[idx] != null) {
-    overrides.installCost = compareInstallOverrides[idx];
-  }
-  return calculate(sizeKw, postcode, lat, lon, nasaData, overrides);
+  // Same plans, battery and rate overrides as the main result; solar price is per-card.
+  const isCurrent = currentResult && Math.abs(sizeKw - currentResult.systemKw) < 0.01;
+  const installCost = (idx != null && compareInstallOverrides[idx] != null) ? compareInstallOverrides[idx]
+    : (isCurrent && pricingOverrides.installCost != null) ? pricingOverrides.installCost
+    : defaultInstallCost(sizeKw);
+  const d = computeDeal(lastCalcInputs, { sizeKw, installCost });
+  return {
+    annualSavings: Math.round(d.annualSaving),
+    annualKwh: Math.round(d.genAnnual),
+    paybackYears: d.paybackYears != null ? Math.round(d.paybackYears * 10) / 10 : null,
+    installCost: Math.round(d.solarCost)
+  };
 }
 
 function renderComparePanel(currentResult) {
@@ -2182,7 +3120,7 @@ function renderComparePanel(currentResult) {
         <span class="v">${r.paybackYears != null ? '~' + r.paybackYears + ' yrs' : '—'}</span>
       </div>
       <div class="compare-row">
-        <span class="k">Install cost${isCustomCost ? ' <span class="custom-tag" title="Custom price">·</span>' : ''}</span>
+        <span class="k">Solar price${isCustomCost ? ' <span class="custom-tag" title="Custom price">·</span>' : ''}</span>
         <span class="v">$<span class="compare-install" contenteditable="true" inputmode="numeric" data-compare-idx="${idx}">${r.installCost.toLocaleString('en-AU')}</span></span>
       </div>
     `;
@@ -2279,23 +3217,34 @@ function renderNameBanner() {
 
 // ----- Share buttons (WhatsApp + Copy) -----
 function buildShareMessage(r) {
-  if (!r) return '';
+  if (!r || !r.deal) return '';
+  const d = r.deal;
   const name = getCustomerName();
-  const greet = name ? `Hi ${name}, ` : '';
-  const suburb = (r.locationDisplay || '').split(',')[0];
-  const sizeStr = `${r.systemKw}kW`;
-  const savings = `~$${r.annualSavings.toLocaleString('en-AU')}/yr`;
-  const gen = `~${r.annualKwh.toLocaleString('en-AU')} kWh/yr`;
-  const payback = r.paybackYears != null ? `~${r.paybackYears}-year payback` : '';
-  const parts = [
-    `${greet}for a ${sizeStr} solar system at ${suburb}:`,
-    `• Bill savings: ${savings}`,
-    `• Generation: ${gen}`,
-    payback ? `• ${payback}` : null,
-    '',
-    'Full breakdown coming through.'
-  ].filter(Boolean);
-  return parts.join('\n');
+  const greet = name ? `Hi ${name}, here's` : `Here's`;
+  const loc = (r.locationDisplay || '').split(',')[0].replace(/^Postcode\s+/, '');
+  const what = d.mode === 'solar' ? `${d.solarKw}kW solar`
+    : d.mode === 'addBattery' ? `adding a ${d.batKwh}kWh battery to your solar`
+    : `${d.solarKw}kW solar + a ${d.batKwh}kWh battery`;
+  const toQ = Math.max(0, d.afterAnnual / 4);
+  const net = Math.round(d.weeklyNet);
+  const lines = [
+    `${greet} what ${what} looks like at ${loc}:`,
+    `• Power bill: ~${fmt$(d.beforeAnnual / 4)} → ~${fmt$(toQ)} a quarter${d.afterAnnual < 0 ? ` (plus ~${fmt$(-d.afterAnnual / 4)} credit)` : ''}`,
+    `• Saves ~${fmt$(d.weeklySave)}/week — finance ~${fmt$(d.weeklyRepay)}/week${net >= 0 ? ' (cash-positive)' : ''}`
+  ];
+  if (d.batKwh && d.rebate.now) {
+    let reb = `• Includes ~${fmt$(d.rebate.now)} federal battery rebate`;
+    if (d.rebate.next && d.rebate.next.drop > 0) reb += ` — it drops ~${fmt$(d.rebate.next.drop)} on ${fmtDateLong(d.rebate.next.date)}`;
+    lines.push(reb);
+  }
+  if (d.results.length > 1) {
+    const bp = d.best.plan;
+    lines.push(bp.kind === 'free'
+      ? `• Best plan: ${bp.name} (free power ${fmtHour(bp.free.start)}–${fmtHour(bp.free.end)})`
+      : `• Best plan: stay on a flat-rate plan`);
+  }
+  lines.push('', 'Worth a quick 10-min chat this week to lock it in?');
+  return lines.join('\n');
 }
 
 // v1.4 — copy-message handler factory. Returns an async click handler bound to a specific
@@ -2370,6 +3319,7 @@ function saveRecents(arr) {
 function saveToRecents(r) {
   if (!lastCalcInputs) return;
   const recents = loadRecents();
+  const c = lastCalcInputs;
   const entry = {
     ts: Date.now(),
     customerName: getCustomerName(),
@@ -2378,10 +3328,17 @@ function saveToRecents(r) {
     postcode: r.postcode,
     annualSavings: r.annualSavings,
     annualKwh: r.annualKwh,
-    paybackYears: r.paybackYears
+    paybackYears: r.paybackYears,
+    mode: c.mode,
+    bill: c.bill,
+    inputSizeKw: c.sizeKw,
+    inputBatteryKwh: c.batteryKwh,
+    batteryKwh: r.deal ? r.deal.batKwh : 0
   };
-  // Dedupe: same postcode + size + name within 5 minutes overwrites previous
-  const filtered = recents.filter(e => !(e.postcode === entry.postcode && e.sizeKw === entry.sizeKw && e.customerName === entry.customerName));
+  // Dedupe: same customer + postcode + mode + inputs overwrites the previous entry
+  const filtered = recents.filter(e => !(e.postcode === entry.postcode && e.customerName === entry.customerName &&
+    (e.mode || 'solar') === entry.mode && (e.inputSizeKw != null ? e.inputSizeKw : e.sizeKw) === (entry.inputSizeKw != null ? entry.inputSizeKw : entry.sizeKw) &&
+    (e.bill || null) === (entry.bill || null) && (e.inputBatteryKwh || null) === (entry.inputBatteryKwh || null)));
   filtered.unshift(entry);
   saveRecents(filtered);
   renderRecents();
@@ -2400,7 +3357,7 @@ function renderRecents() {
     const namePart = e.customerName ? `<strong>${escapeHtml(e.customerName)}</strong> · ` : '';
     const loc = (e.location || '').split(',').slice(0, 2).join(',');
     return `<li class="recent-item" data-recent-idx="${i}">
-      <div class="recent-line1">${namePart}${e.sizeKw}kW · $${(e.annualSavings || 0).toLocaleString('en-AU')}/yr</div>
+      <div class="recent-line1">${namePart}${e.sizeKw}kW${e.batteryKwh ? ' + ' + e.batteryKwh + 'kWh' : ''} · $${(e.annualSavings || 0).toLocaleString('en-AU')}/yr</div>
       <div class="recent-line2">${escapeHtml(loc)} · ${when}</div>
     </li>`;
   }).join('');
@@ -2411,7 +3368,12 @@ function renderRecents() {
       if (!e) return;
       // Re-load inputs and trigger calculate
       document.getElementById('customerName').value = e.customerName || '';
-      document.getElementById('size').value = e.sizeKw;
+      setMode(e.mode || 'solar');
+      // v1 entries have no mode/inputs — fall back to the stored size
+      const sz = e.mode ? e.inputSizeKw : e.sizeKw;
+      document.getElementById('size').value = sz != null ? sz : '';
+      document.getElementById('bill').value = e.bill || '';
+      document.getElementById('battery').value = e.inputBatteryKwh || '';
       document.getElementById('location').value = e.location || e.postcode;
       handleCalculate();
     });
@@ -2441,8 +3403,9 @@ function setupRecents() {
   }
 }
 
+const SETTING_FIELDS = ['batteryPerKwh', 'stcPrice', 'loanRate', 'loanYears'];
 function setupPricingPanel() {
-  const fields = ['editRetail','editFit','editSelf','editInstall'];
+  const fields = ['editRetail','editFit','editSupply','editInstall','editBatteryPerKwh','editStc','editLoanRate','editLoanYears'];
   fields.forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
@@ -2453,7 +3416,8 @@ function setupPricingPanel() {
         recalcWithOverrides(); // re-render to restore display
         return;
       }
-      pricingOverrides[field] = newVal;
+      if (SETTING_FIELDS.includes(field)) saveSetting(field, newVal);   // business defaults — remembered
+      else pricingOverrides[field] = newVal;                            // this customer only
       recalcWithOverrides();
     });
     el.addEventListener('keydown', (e) => {
@@ -2464,7 +3428,17 @@ function setupPricingPanel() {
   const resetBtn = document.getElementById('resetPricing');
   if (resetBtn) {
     resetBtn.addEventListener('click', () => {
-      pricingOverrides = {};
+      pricingOverrides = {};            // customer overrides only; remembered battery/finance settings stay
+      recalcWithOverrides();
+    });
+  }
+  const netSel = document.getElementById('networkSelect');
+  if (netSel) {
+    netSel.addEventListener('change', () => {
+      if (!lastCalcInputs) return;
+      lastCalcInputs.networkKey = netSel.value || null;
+      delete pricingOverrides.retailRate;   // new network → its own default rates
+      delete pricingOverrides.supply;
       recalcWithOverrides();
     });
   }
@@ -2560,6 +3534,10 @@ async function captureAndCopy(which) {
   // Show feedback BEFORE applying the capturing class (which hides the toast)
   showToast('Capturing…');
 
+  if (which === 'bottom') {
+    const det = document.getElementById('moreDetails');
+    if (!det.open) { det.open = true; if (chartPending) { renderChart(chartPending); chartPending = null; } }
+  }
   // Apply frame, jump to top WITHOUT smooth scroll (smooth scroll breaks html2canvas timing)
   document.body.classList.remove('screenshot-top', 'screenshot-bottom');
   document.body.classList.add(`screenshot-${which}`);
@@ -2723,7 +3701,8 @@ function setupReadyPulse() {
   const btn = document.getElementById('calculateBtn');
   let hasPulsed = false;
   const check = () => {
-    const ok = size.value.trim() && loc.value.trim() && parseFloat(size.value) > 0;
+    const bill = document.getElementById('bill');
+    const ok = loc.value.trim() && ((size.value.trim() && parseFloat(size.value) > 0) || (bill.value.trim() && parseFloat(bill.value) > 0));
     if (ok && !hasPulsed) {
       btn.classList.add('ready');
       hasPulsed = true;
@@ -2733,6 +3712,61 @@ function setupReadyPulse() {
   };
   size.addEventListener('input', check);
   loc.addEventListener('input', check);
+  document.getElementById('bill').addEventListener('input', check);
+}
+
+/* ---------- v2: mode switch ---------- */
+const MODE_KEY = 'whatifsolar_mode_v2';
+let currentMode = 'solarBattery';
+function setMode(mode) {
+  if (!['solar', 'solarBattery', 'addBattery'].includes(mode)) mode = 'solarBattery';
+  currentMode = mode;
+  document.querySelectorAll('.mode-btn').forEach(b => b.setAttribute('aria-pressed', b.dataset.mode === mode ? 'true' : 'false'));
+  document.getElementById('batteryField').classList.toggle('is-hidden', mode === 'solar');
+  const sizeInput = document.getElementById('size');
+  if (mode === 'addBattery') {
+    document.getElementById('sizeLabel').textContent = 'Existing solar (kW)';
+    sizeInput.placeholder = 'e.g. 6.6';
+    document.getElementById('sizeHint').textContent = 'Size of the solar already on the roof.';
+  } else {
+    document.getElementById('sizeLabel').textContent = 'Solar size (kW)';
+    sizeInput.placeholder = 'auto from bill';
+    document.getElementById('sizeHint').textContent = 'Leave blank to recommend from the bill.';
+  }
+  try { localStorage.setItem(MODE_KEY, mode); } catch (e) { /* ignore */ }
+}
+function setupModeSwitch() {
+  let saved = null;
+  try { saved = localStorage.getItem(MODE_KEY); } catch (e) { saved = null; }
+  setMode(saved || 'solarBattery');
+  document.querySelectorAll('.mode-btn').forEach(b => {
+    b.addEventListener('click', () => {
+      setMode(b.dataset.mode);
+      // A pending location confirm was captured under the old mode — make them press Calculate again
+      if (pendingGeocode) { pendingGeocode = null; document.getElementById('confirmCard').classList.remove('show'); }
+      if (!lastCalcInputs) return;
+      const prev = lastCalcInputs.mode;          // the mode the shown result was calculated in
+      if (prev === b.dataset.mode) return;
+      // Solar <-> Solar + Battery: same inputs, recalc live. Add battery changes what the bill means → fresh calc.
+      if (prev !== 'addBattery' && b.dataset.mode !== 'addBattery') {
+        lastCalcInputs.mode = b.dataset.mode;
+        if (b.dataset.mode === 'solarBattery') {
+          const bv = parseFloat(document.getElementById('battery').value);
+          lastCalcInputs.batteryKwh = bv > 0 ? bv : null;
+        }
+        recalcWithOverrides();
+      } else {
+        document.getElementById('results').classList.remove('show');
+        lastCalcInputs = null; currentResult = null;
+      }
+    });
+  });
+}
+function setupMoreDetails() {
+  const det = document.getElementById('moreDetails');
+  det.addEventListener('toggle', () => {
+    if (det.open && chartPending) { renderChart(chartPending); chartPending = null; }
+  });
 }
 
 /* ---------- 8. Init ---------- */
@@ -2744,12 +3778,14 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('confirmCard').classList.remove('show');
     document.getElementById('location').focus();
   });
-  // Enter key in either input triggers calculate
-  ['size','location'].forEach(id => {
+  // Enter key in any input triggers calculate
+  ['size','location','bill','battery'].forEach(id => {
     document.getElementById(id).addEventListener('keydown', (e) => {
       if (e.key === 'Enter') handleCalculate();
     });
   });
+  setupModeSwitch();
+  setupMoreDetails();
   setupAdvancedToggle();
   setupSeasonalTabs();
   setupScreenshotButtons();
