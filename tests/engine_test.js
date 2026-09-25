@@ -6,7 +6,7 @@ const start = html.indexOf('/* =================================================
 const end = html.indexOf('// Approximate state-capital coordinates');
 assert(start > 0 && end > start, 'engine block not found');
 const ctx = {}; vm.createContext(ctx);
-vm.runInContext(html.slice(start, end) + '\n;this.E={NETWORKS,postcodeToNetwork,batteryRebate,weeklyRepayment,solarHourlyShape,LOAD_SHAPE,buildPlans,simulateYear,consumptionFromBill,recommendSolarKw,recommendBatteryKwh};', ctx);
+vm.runInContext(html.slice(start, end) + '\n;this.E={OTHER_STATE_TARIFFS,FIT_DEFAULTS,WA_DEBS,EV_KWH_YEAR,NETWORKS,postcodeToNetwork,batteryRebate,weeklyRepayment,solarHourlyShape,LOAD_SHAPE,buildPlans,simulateYear,consumptionFromBill,recommendSolarKw,recommendBatteryKwh};', ctx);
 const E = ctx.E;
 let n = 0; const ok = (c, m) => { assert(c, m); n++; };
 const near = (a, b, tol) => Math.abs(a - b) <= tol;
@@ -60,4 +60,24 @@ for (const k of Object.keys(AER)) {
 }
 // VIC reference (ESC VDO 2026–27 / Midday Power Saver schedule) — spot values
 ok(E.NETWORKS.POWERCOR.flat === 0.2822 && E.NETWORKS.POWERCOR.free.bands.peak === 0.4381 && E.NETWORKS.POWERCOR.free.bands.offpeak === 0.2462, 'Powercor reference values');
+// Other states: verified regulated flat tariffs (OTTER, QCA/Ergon, Jacana)
+ok(E.OTHER_STATE_TARIFFS.TAS.flat === 0.279538 && E.OTHER_STATE_TARIFFS.TAS.supply === 1.676815, 'TAS Tariff 31');
+ok(E.OTHER_STATE_TARIFFS.QLD.flat === 0.28895 && E.OTHER_STATE_TARIFFS.QLD.supply === 1.80508, 'Ergon Tariff 11');
+ok(!E.OTHER_STATE_TARIFFS.WA.verified && !E.OTHER_STATE_TARIFFS.ACT.verified, 'WA/ACT flagged unverified');
+const tasPlan = E.buildPlans(null, 'TAS', { fit: 0.09276, flatRate: 0.279538 });
+ok(tasPlan.length === 1 && near(tasPlan[0].supply, 1.676815, 1e-9), 'TAS flat-only plan uses OTTER supply');
+// WA DEBS: exports earn 2c except 3–9pm at 10c → effective credit well below a flat 10c
+const waFlat10 = E.buildPlans(null, 'WA', { fit: 0.10, flatRate: 0.3237 })[0];
+const waDebs = E.buildPlans(null, 'WA', { fit: 0.02, flatRate: 0.3237, fitByHour: E.WA_DEBS })[0];
+const gWA = mf.map(f => f * 1600 * 6.6);
+const bFlat10 = E.simulateYear({ monthlyGenKwh: gWA, annualLoadKwh: 6000, battery: null, lat: -31.9, state: 'WA', plan: waFlat10 });
+const bDebs = E.simulateYear({ monthlyGenKwh: gWA, annualLoadKwh: 6000, battery: null, lat: -31.9, state: 'WA', plan: waDebs });
+const effFit = (bDebs.annualBill - (waDebs.supply * 365 + bDebs.importKwh * 0.3237)) / -bDebs.exportKwh;
+ok(effFit > 0.02 && effFit < 0.04, `WA DEBS effective export rate ${effFit.toFixed(3)}`);
+// EV: adds its kWh to consumption; charging in the free window is cheaper than overnight flat
+const evFree = E.simulateYear({ monthlyGenKwh: zeros, annualLoadKwh: 6000, battery: null, lat: -37.9, state: 'VIC', plan: plans[1], extra: { kwhYear: 2000, hours: [11, 12, 13] } });
+const noEvFree = E.simulateYear({ monthlyGenKwh: zeros, annualLoadKwh: 6000, battery: null, lat: -37.9, state: 'VIC', plan: plans[1] });
+const evFlat = E.simulateYear({ monthlyGenKwh: zeros, annualLoadKwh: 6000, battery: null, lat: -37.9, state: 'VIC', plan: plans[0], extra: { kwhYear: 2000, hours: [22, 23, 0, 1, 2, 3, 4, 5] } });
+ok(near(evFlat.importKwh - 6000 * 365.25 / 365, 2000 * 365.25 / 365, 5), 'EV adds ~2,000 kWh');
+ok(evFree.annualBill - noEvFree.annualBill < 1, `EV in free window costs ~$0 (${Math.round(evFree.annualBill - noEvFree.annualBill)})`);
 console.log(`engine_test: ${n} checks passed`);
